@@ -1,0 +1,9 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "start": "node main.js",
+    "dev": "node main.js",
+    "build": "vite build"
+  },
+  "unstable": ["node-globals"]
+}

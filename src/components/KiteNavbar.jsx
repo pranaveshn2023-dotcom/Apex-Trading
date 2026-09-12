@@ -35,11 +35,13 @@ export default function KiteNavbar({
   onToggleWatchlist,
   currentUser = null,
   onOpenAuth,
-  onLockScreen
+  onLockScreen,
+  onInstallApp,
+  isAppInstalled = false
 }) {
   const isMarketOpen = isIndianMarketOpen();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(isAppInstalled);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
@@ -344,6 +346,30 @@ export default function KiteNavbar({
 
         {/* 3. RIGHT: Search, Margin & Profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          {/* PWA Install Button */}
+          {!(isInstalled || isAppInstalled) && (
+            <button
+              onClick={onInstallApp || handleInstallClick}
+              className="btn-ghost"
+              style={{
+                padding: '5px 9px',
+                fontSize: '0.72rem',
+                background: 'rgba(99, 102, 241, 0.12)',
+                borderColor: 'rgba(99, 102, 241, 0.4)',
+                color: '#a5b4fc',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                cursor: 'pointer',
+                fontWeight: 700
+              }}
+              title="Install Apex Trading App on your desktop or mobile device"
+            >
+              <Smartphone size={13} color="#818cf8" />
+              <span className="hide-mobile">Install App</span>
+            </button>
+          )}
+
           {/* Universal Search Button */}
           <button
             onClick={onOpenSearch}

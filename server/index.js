@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import {
@@ -29,8 +32,13 @@ import {
   destroySession 
 } from './services/sessionSecurity.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DIST_DIR = path.resolve(__dirname, '../dist');
+const PUBLIC_DIR = path.resolve(__dirname, '../public');
+
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5173;
 
 // 1. Security Headers (Helmet)
 app.use(helmet({
@@ -352,6 +360,41 @@ app.post('/api/auth/logout', async (req, res) => {
   res.json({ success: true });
 });
 
+// --- STATIC ASSETS & SPA ROUTING (Full-Stack Support for Deno Deploy & Production) ---
+app.use(express.static(DIST_DIR, {
+  maxAge: '1y',
+  immutable: true,
+  index: false
+}));
+
+app.use(express.static(PUBLIC_DIR, {
+  maxAge: '0',
+  etag: true
+}));
+
+// SPA Fallback: All client-side routes serve dist/index.html (Express 5 compatible)
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ success: false, error: 'API endpoint not found' });
+  }
+  const indexHtml = path.join(DIST_DIR, 'index.html');
+  if (fs.existsSync(indexHtml)) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    return res.sendFile(indexHtml);
+  }
+  res.status(200).send(`
+    <!DOCTYPE html>
+    <html>
+      <head><title>Apex Trading Terminal</title></head>
+      <body style="background:#070a11;color:#fff;font-family:sans-serif;text-align:center;padding:50px;">
+        <h2>Apex Trading Terminal</h2>
+        <p>Application is building or dist directory is not found. Please run <code>npm run build</code>.</p>
+      </body>
+    </html>
+  `);
+});
+
 app.listen(PORT, () => {
-  console.log(`Indian Equities Paper Trading API running on http://localhost:${PORT}`);
+  console.log(`Apex Trading Full-Stack Server running on port ${PORT}`);
 });

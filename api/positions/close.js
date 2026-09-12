@@ -27,7 +27,8 @@ export default async function handler(req, res) {
   try {
     const userId = req.headers['x-user-id'] || 'default';
     await initD1Tables();
-    const { positionId, exitThesis } = req.body;
+    const positionId = req.body?.positionId || req.body?.id || req.query?.id || (req.url ? req.url.split('?')[0].split('/').filter(Boolean).slice(-2, -1)[0] : null);
+    const exitThesis = req.body?.exitThesis || '';
     if (!positionId) return res.status(400).json({ success: false, error: 'positionId required' });
 
     const portfolio = await loadUserPortfolio(userId);

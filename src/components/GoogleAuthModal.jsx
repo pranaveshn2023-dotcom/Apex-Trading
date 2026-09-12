@@ -34,6 +34,19 @@ export default function GoogleAuthModal({ isOpen, onClose, currentUser, onLoginS
         auto_select: false,
         cancel_on_tap_outside: true
       });
+
+      const container = document.getElementById('googleModalSignInButton');
+      if (container) {
+        container.innerHTML = '';
+        window.google.accounts.id.renderButton(container, {
+          theme: 'outline',
+          size: 'large',
+          width: 320,
+          text: 'signin_with',
+          shape: 'rectangular',
+          logo_alignment: 'left'
+        });
+      }
     } catch (err) {
       console.warn('Google client init notice:', err);
     }
@@ -62,48 +75,9 @@ export default function GoogleAuthModal({ isOpen, onClose, currentUser, onLoginS
     }
   };
 
-  // Primary interactive Google Sign-in trigger
   const handleGoogleClick = () => {
     if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // If prompt is blocked or skipped, fallback to token popup
-          triggerTokenPopup();
-        }
-      });
-    } else {
-      triggerTokenPopup();
-    }
-  };
-
-  const triggerTokenPopup = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Direct fast login fallback
-      const savedName = localStorage.getItem('ax_trader_name') || 'Pranavesh';
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          profile: {
-            email: `${savedName.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
-            name: savedName,
-            picture: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(savedName)}&backgroundColor=10b981,0284c7&textColor=ffffff`
-          }
-        })
-      });
-      const data = await res.json();
-      if (data.success && data.data?.user) {
-        onLoginSuccess(data.data.user);
-        onClose();
-      } else {
-        throw new Error(data.error || 'Sign in error');
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      window.google.accounts.id.prompt();
     }
   };
 
@@ -270,10 +244,11 @@ export default function GoogleAuthModal({ isOpen, onClose, currentUser, onLoginS
             )}
 
             {/* High-End, Premium Google Button */}
-            <button
-              type="button"
-              onClick={handleGoogleClick}
-              disabled={loading}
+            <div id="googleModalSignInButton" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={handleGoogleClick}
+                disabled={loading}
               style={{
                 width: '100%',
                 background: '#ffffff',
@@ -332,6 +307,7 @@ export default function GoogleAuthModal({ isOpen, onClose, currentUser, onLoginS
                 {loading ? 'Connecting to Google...' : 'Sign in with Google'}
               </span>
             </button>
+          </div>
 
             {/* Subtle App Highlights */}
             <div style={{ 

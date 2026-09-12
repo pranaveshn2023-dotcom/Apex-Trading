@@ -26,6 +26,21 @@ import ScreenLockModal from './components/ScreenLockModal';
 import ProfileTab from './components/ProfileTab';
 import { isAnyMarketOpen, shouldPollSymbol } from './utils/marketHours';
 
+// Safe fetch helper that resists non-JSON / error responses
+const safeFetchJson = async (url, options = {}) => {
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) return { success: false, status: res.status };
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await res.json();
+    }
+    return { success: false, error: 'Non-JSON response' };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
 // Responsive hook: true when viewport is mobile/tablet width
 function useIsMobile(breakpoint = 900) {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= breakpoint);
@@ -53,6 +68,46 @@ export default function App() {
   const isMobile = useIsMobile();
   const [showMobileWatchlist, setShowMobileWatchlist] = useState(false);
 
+  // PWA Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isPwaInstalled, setIsPwaInstalled] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator?.standalone === true;
+  });
+
+  useEffect(() => {
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsPwaInstalled(true);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallPwa = useCallback(async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsPwaInstalled(true);
+      }
+      setDeferredPrompt(null);
+    } else {
+      alert('To install Apex Trading:\n\nChrome/Edge: Click the install icon in your address bar.\niOS Safari: Tap Share -> "Add to Home Screen".\nAndroid: Tap browser menu -> "Install App".');
+    }
+  }, [deferredPrompt]);
+
   // Beginner Mode (persisted)
   const [beginnerMode, setBeginnerMode] = useState(() => localStorage.getItem('bt-beginner-mode') === '1');
   const toggleBeginnerMode = () => {
@@ -79,10 +134,9 @@ export default function App() {
 
   // Verify session on mount
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
+    safeFetchJson('/api/auth/me')
       .then(res => {
-        if (res.success && res.user) {
+        if (res && res.success && res.user) {
           setCurrentUser(res.user);
           localStorage.setItem('ax_current_user', JSON.stringify(res.user));
         } else if (!localStorage.getItem('ax_current_user')) {
@@ -156,10 +210,9 @@ export default function App() {
 
   // Fetch Live Indices
   const fetchIndices = useCallback(() => {
-    fetch('/api/market/indices')
-      .then(res => res.json())
+    safeFetchJson('/api/market/indices')
       .then(res => {
-        if (res.success && res.data) setIndices(res.data);
+        if (res && res.success && res.data) setIndices(res.data);
       })
       .catch(console.error);
   }, []);
@@ -167,10 +220,9 @@ export default function App() {
   // Fetch Current Stock Quote
   const fetchQuote = useCallback((symbol) => {
     if (!symbol) return;
-    fetch(`/api/market/quote/${encodeURIComponent(symbol)}`)
-      .then(res => res.json())
+    safeFetchJson(`/api/market/quote/${encodeURIComponent(symbol)}`)
       .then(res => {
-        if (res.success && res.data) {
+        if (res && res.success && res.data) {
           setCurrentQuote(res.data);
           if (res.data.symbol && res.data.symbol !== symbol) {
             setActiveSymbol(res.data.symbol);
@@ -184,10 +236,9 @@ export default function App() {
   const fetchCandles = useCallback((symbol, tf, silent = false) => {
     if (!symbol) return;
     if (!silent) setLoadingChart(true);
-    fetch(`/api/market/history/${encodeURIComponent(symbol)}?range=${tf.range}&interval=${tf.interval}`)
-      .then(res => res.json())
+    safeFetchJson(`/api/market/history/${encodeURIComponent(symbol)}?range=${tf.range}&interval=${tf.interval}`)
       .then(res => {
-        if (res.success && res.data) setCandles(res.data);
+        if (res && res.success && res.data) setCandles(res.data);
       })
       .catch(console.error)
       .finally(() => { if (!silent) setLoadingChart(false); });
@@ -195,10 +246,9 @@ export default function App() {
 
   // Fetch Portfolio Summary
   const fetchPortfolio = useCallback(() => {
-    fetch('/api/portfolio')
-      .then(res => res.json())
+    safeFetchJson('/api/portfolio')
       .then(res => {
-        if (res.success && res.data) {
+        if (res && res.success && res.data) {
           setPortfolio(res.data);
         }
       })
@@ -390,7 +440,13 @@ export default function App() {
 
   // MANDATORY AUTH GATE: No user enters the terminal without logging in
   if (!currentUser) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <LoginPage
+        onLoginSuccess={handleLoginSuccess}
+        onInstallApp={handleInstallPwa}
+        isAppInstalled={isPwaInstalled}
+      />
+    );
   }
 
   return (
@@ -413,6 +469,8 @@ export default function App() {
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLockScreen={handleLockScreen}
+        onInstallApp={handleInstallPwa}
+        isAppInstalled={isPwaInstalled}
       />
 
       {/* Main Body with 2-Column Split Layout */}
@@ -712,9 +770,7 @@ export default function App() {
         onSelectTab={setActiveTab}
         onOpenTips={() => setIsTipsOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
-        onInstallPWA={() => {
-          alert('To install Apex Trading on your phone:\n\nTap your browser menu (or share icon) -> "Install App" or "Add to Home Screen".');
-        }}
+        onInstallPWA={handleInstallPwa}
         indices={indices}
         onSelectStock={handleSelectStock}
         portfolio={portfolio}

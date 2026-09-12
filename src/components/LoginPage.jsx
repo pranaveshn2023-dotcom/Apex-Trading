@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Zap, BarChart3, Shield } from 'lucide-react';
+import { TrendingUp, Zap, BarChart3, Smartphone } from 'lucide-react';
 import { getIndianMarketStatus, getUSMarketStatus } from '../utils/marketHours';
 
-export default function LoginPage({ onLoginSuccess }) {
+export default function LoginPage({ onLoginSuccess, onInstallApp, isAppInstalled = false }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '869967589999-4t07kdod7foj6i934queg7juguh9ofhj.apps.googleusercontent.com';
@@ -22,9 +22,9 @@ export default function LoginPage({ onLoginSuccess }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Initialize Google Identity Services
+  // Initialize official Google Identity Services
   useEffect(() => {
-    const initGoogle = () => {
+    const renderGoogleBtn = () => {
       if (window.google?.accounts?.id && googleClientId) {
         try {
           window.google.accounts.id.initialize({
@@ -33,6 +33,22 @@ export default function LoginPage({ onLoginSuccess }) {
             auto_select: false,
             cancel_on_tap_outside: true
           });
+
+          const container = document.getElementById('googleSignInButton');
+          if (container) {
+            container.innerHTML = '';
+            window.google.accounts.id.renderButton(container, {
+              theme: 'outline',
+              size: 'large',
+              width: 360,
+              text: 'signin_with',
+              shape: 'rectangular',
+              logo_alignment: 'left'
+            });
+          }
+
+          // Optional: Display One Tap prompt if supported
+          window.google.accounts.id.prompt();
         } catch (err) {
           console.warn('Google GSI init notice:', err);
         }
@@ -44,10 +60,10 @@ export default function LoginPage({ onLoginSuccess }) {
       script.src = 'https://accounts.google.com/gsi/client';
       script.async = true;
       script.defer = true;
-      script.onload = initGoogle;
+      script.onload = renderGoogleBtn;
       document.body.appendChild(script);
     } else {
-      initGoogle();
+      renderGoogleBtn();
     }
   }, [googleClientId]);
 
@@ -74,78 +90,8 @@ export default function LoginPage({ onLoginSuccess }) {
   };
 
   const handleGoogleClick = () => {
-    // 1. Try Google OAuth2 Interactive Popup
-    if (window.google?.accounts?.oauth2 && googleClientId) {
-      try {
-        const client = window.google.accounts.oauth2.initTokenClient({
-          client_id: googleClientId,
-          scope: 'openid profile email',
-          callback: async (tokenResponse) => {
-            if (tokenResponse && tokenResponse.access_token) {
-              setLoading(true);
-              try {
-                const infoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
-                });
-                const info = await infoRes.json();
-                if (info && info.email) {
-                  await triggerLoginWithProfile({
-                    email: info.email,
-                    name: info.name || info.given_name || info.email.split('@')[0],
-                    picture: info.picture
-                  });
-                  return;
-                }
-              } catch (e) {
-                console.warn('UserInfo fetch notice:', e);
-              }
-            }
-          }
-        });
-        client.requestAccessToken();
-        return;
-      } catch (err) {
-        console.warn('Token client notice:', err);
-      }
-    }
-
-    // 2. Fallback: Google One-Tap
     if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          triggerLoginWithProfile();
-        }
-      });
-    } else {
-      triggerLoginWithProfile();
-    }
-  };
-
-  const triggerLoginWithProfile = async (customProfile = null) => {
-    setLoading(true);
-    setError(null);
-    const profile = customProfile || {
-      email: 'trader@gmail.com',
-      name: 'Trader',
-      picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c'
-    };
-
-    try {
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile })
-      });
-      const data = await res.json();
-      if (data.success && data.data?.user) {
-        onLoginSuccess(data.data.user);
-      } else {
-        throw new Error(data.error || 'Login failed');
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      window.google.accounts.id.prompt();
     }
   };
 
@@ -178,15 +124,17 @@ export default function LoginPage({ onLoginSuccess }) {
       {/* Top Navbar */}
       <header style={{
         height: '64px',
+        borderBottom: '1px solid #172131',
+        background: 'rgba(9, 14, 24, 0.8)',
+        backdropFilter: 'blur(16px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 32px',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        padding: '0 24px',
         position: 'relative',
         zIndex: 10
       }}>
-        {/* Brand Logo */}
+        {/* Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
             width: '32px',
@@ -203,8 +151,31 @@ export default function LoginPage({ onLoginSuccess }) {
           </span>
         </div>
 
-        {/* Live Market Hours Status */}
+        {/* Live Market Hours Status & PWA Install */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {!isAppInstalled && onInstallApp && (
+            <button
+              onClick={onInstallApp}
+              style={{
+                fontSize: '0.68rem',
+                fontWeight: 800,
+                padding: '4px 9px',
+                borderRadius: '5px',
+                background: 'rgba(99, 102, 241, 0.15)',
+                color: '#a5b4fc',
+                border: '1px solid rgba(99, 102, 241, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                cursor: 'pointer'
+              }}
+              title="Install Apex Trading PWA"
+            >
+              <Smartphone size={12} color="#818cf8" />
+              <span>Install App</span>
+            </button>
+          )}
+
           {/* NSE Status */}
           <span
             title={marketStatus.indian.tooltip}
@@ -321,66 +292,45 @@ export default function LoginPage({ onLoginSuccess }) {
             </div>
           )}
 
-          {/* Primary Sign-In Button */}
-          <button
-            type="button"
-            onClick={handleGoogleClick}
-            disabled={loading}
-            style={{
-              width: '100%',
-              background: '#ffffff',
-              color: '#1f2937',
-              border: 'none',
-              padding: '14px 22px',
-              borderRadius: '12px',
-              fontWeight: 600,
-              fontSize: '1rem',
-              fontFamily: "'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, sans-serif",
-              cursor: loading ? 'wait' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '12px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.45)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.backgroundColor = '#f8fafc';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) {
-                e.currentTarget.style.backgroundColor = '#ffffff';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }
-            }}
-          >
-            {/* Official Google G Logo */}
-            <svg width="22" height="22" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-              />
-            </svg>
+          {/* Official Google Sign-In Button Container */}
+          <div style={{ display: 'flex', justifyContent: 'center', minHeight: '44px', width: '100%' }}>
+            <div id="googleSignInButton" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              {/* Fallback button while Google SDK initializes */}
+              <button
+                type="button"
+                onClick={handleGoogleClick}
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  background: '#ffffff',
+                  color: '#1f2937',
+                  border: 'none',
+                  padding: '12px 22px',
+                  borderRadius: '12px',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  fontFamily: "'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, sans-serif",
+                  cursor: loading ? 'wait' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.45)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span>{loading ? 'Connecting...' : 'Sign in with Google'}</span>
+              </button>
+            </div>
+          </div>
 
-            <span>{loading ? 'Connecting to Google...' : 'Sign in with Google'}</span>
-          </button>
-
-          {/* Value Pillars List (Public Broker Features) */}
+          {/* Value Pillars List */}
           <div style={{
             marginTop: '32px',
             paddingTop: '24px',
@@ -408,26 +358,15 @@ export default function LoginPage({ onLoginSuccess }) {
               <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(168, 85, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <TrendingUp size={13} color="#a855f7" />
               </div>
-              <span><strong>Advanced Charts:</strong> TradingView-grade minute candles, EMA & volume</span>
+              <span><strong>Execution Simulator:</strong> Limit, Market & SL orders with real slippage & charges</span>
             </div>
           </div>
 
+          <div style={{ marginTop: '24px', fontSize: '0.72rem', color: '#475569' }}>
+            Protected by Cloudflare & Google Identity • Strict Security Standards
+          </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer style={{
-        padding: '16px 32px',
-        textAlign: 'center',
-        fontSize: '0.75rem',
-        color: '#64748b',
-        borderTop: '1px solid rgba(255, 255, 255, 0.04)',
-        position: 'relative',
-        zIndex: 10
-      }}>
-        Apex Trading • Real-Time Paper Trading & Market Terminal
-      </footer>
-
     </div>
   );
 }
