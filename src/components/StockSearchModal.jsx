@@ -1,81 +1,80 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, TrendingUp, Sparkles, ArrowRight, Globe, Layers, BarChart2 } from 'lucide-react';
-import { formatCurrency } from '../utils/formatters';
+import { Search, X, TrendingUp, Sparkles, ArrowRight, Check } from 'lucide-react';
 
-export default function StockSearchModal({ 
-  isOpen, 
-  onClose, 
-  onSelectStock 
-}) {
+export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [loading, setLoading] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
   const inputRef = useRef(null);
-  const debounceTimerRef = useRef(null);
 
-  const categories = [
-    { id: 'ALL', label: 'All Instruments' },
-    { id: 'INDEX', label: 'Indices (Indian & Global)' },
-    { id: 'INDIAN', label: 'NSE & BSE Equities' },
-    { id: 'GLOBAL', label: 'US & Global Stocks' },
-    { id: 'ETF', label: 'ETFs & Commodities' },
-  ];
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+      handleSearch('NIFTY');
+    } else {
+      setQuery('');
+      setResults([]);
+    }
+  }, [isOpen]);
+
+  const handleSearch = async (q) => {
+    if (!q || q.trim().length === 0) {
+      setResults([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/market/search?q=${encodeURIComponent(q.trim())}`);
+      const res = await response.json();
+      if (res && res.success && res.data) {
+        setResults(res.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (val) => {
+    setQuery(val);
+    if (val.trim().length >= 1) {
+      handleSearch(val);
+    } else {
+      handleSearch('NIFTY');
+    }
+  };
+
+  if (!isOpen) return null;
 
   const popularPicks = [
     { label: 'NIFTY 50', symbol: '^NSEI' },
     { label: 'BANK NIFTY', symbol: '^NSEBANK' },
     { label: 'SENSEX', symbol: '^BSESN' },
     { label: 'RELIANCE', symbol: 'RELIANCE.NS' },
-    { label: 'TMPV (Tata Motors)', symbol: 'TMPV.NS' },
-    { label: 'ETERNAL (Zomato)', symbol: 'ETERNAL.NS' },
-    { label: 'TCS', symbol: 'TCS.NS' },
+    { label: 'TATA MOTORS', symbol: 'TATAMOTORS.NS' },
+    { label: 'HDFCBANK', symbol: 'HDFCBANK.NS' },
+    { label: 'NIFTY BEES (ETF)', symbol: 'NIFTYBEES.NS' },
     { label: 'S&P 500', symbol: '^GSPC' },
     { label: 'NASDAQ', symbol: '^IXIC' },
-    { label: 'APPLE', symbol: 'AAPL' },
-    { label: 'TESLA', symbol: 'TSLA' },
-    { label: 'NIFTYBEES ETF', symbol: 'NIFTYBEES.NS' },
+    { label: 'APPLE', symbol: 'AAPL' }
   ];
 
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-      handleFetchResults('');
-    } else {
-      setQuery('');
-      setCategoryFilter('ALL');
-    }
-  }, [isOpen]);
+  const categories = [
+    { id: 'ALL', label: 'All Instruments' },
+    { id: 'NSE', label: 'NSE Equities' },
+    { id: 'INDEX', label: 'Indices & Benchmarks' },
+    { id: 'ETF', label: 'Index ETFs' },
+    { id: 'GLOBAL', label: 'Global (US)' }
+  ];
 
-  const handleFetchResults = (q) => {
-    setLoading(true);
-    fetch(`/api/market/search?q=${encodeURIComponent(q)}`)
-      .then(res => res.json())
-      .then(res => {
-        if (res.success) {
-          setResults(res.data);
-        }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
-
-  const handleInputChange = (val) => {
-    setQuery(val);
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(() => {
-      handleFetchResults(val);
-    }, 200);
-  };
-
-  if (!isOpen) return null;
-
-  const filteredResults = results.filter(item => {
+  const filteredResults = results.filter(stock => {
     if (categoryFilter === 'ALL') return true;
-    if (categoryFilter === 'INDEX') return item.type === 'INDEX' || item.sector?.toLowerCase().includes('index') || item.symbol.startsWith('^');
-    if (categoryFilter === 'INDIAN') return item.exchange === 'NSE' || item.exchange === 'BSE' || item.symbol.endsWith('.NS') || item.symbol.endsWith('.BO');
-    if (categoryFilter === 'GLOBAL') return (!item.symbol.endsWith('.NS') && !item.symbol.endsWith('.BO') && !item.symbol.startsWith('^') && item.type !== 'INDEX' && item.type !== 'ETF');
-    if (categoryFilter === 'ETF') return item.type === 'ETF' || item.symbol.endsWith('BEES.NS') || item.sector?.toLowerCase().includes('etf') || item.symbol.includes('=F');
+    if (categoryFilter === 'INDEX') return stock.type === 'INDEX' || stock.sector === 'Index' || stock.symbol.startsWith('^');
+    if (categoryFilter === 'ETF') return stock.type === 'ETF' || stock.symbol.endsWith('BEES.NS');
+    if (categoryFilter === 'NSE') return stock.exchange === 'NSE' && stock.type !== 'INDEX';
+    if (categoryFilter === 'GLOBAL') return stock.exchange === 'NASDAQ' || stock.exchange === 'NYSE' || stock.symbol.startsWith('^G') || stock.symbol.startsWith('^IX');
     return true;
   });
 
@@ -86,12 +85,12 @@ export default function StockSearchModal({
     <div className="modal-overlay" onClick={onClose}>
       <div 
         className="glass-panel-elevated"
-        style={{ width: '700px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', background: '#0e1524', overflow: 'hidden', border: '1px solid #223249' }}
+        style={{ width: '700px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', background: '#ffffff', overflow: 'hidden', border: '1px solid #e2e8f0', borderRadius: '16px', boxShadow: '0 20px 40px -15px rgba(0,0,0,0.15)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid #1e293b', display: 'flex', alignItems: 'center', gap: '12px', background: '#0a0f19' }}>
-          <Search size={22} color="#38bdf8" />
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px', background: '#ffffff' }}>
+          <Search size={22} color="#059669" />
           <input
             ref={inputRef}
             type="text"
@@ -108,7 +107,7 @@ export default function StockSearchModal({
               flex: 1,
               background: 'transparent',
               border: 'none',
-              color: '#fff',
+              color: '#0f172a',
               fontSize: '1.02rem',
               outline: 'none',
               fontWeight: 500
@@ -124,14 +123,14 @@ export default function StockSearchModal({
           )}
           <button
             onClick={onClose}
-            style={{ background: '#1a2333', border: '1px solid #2b394e', color: '#94a3b8', borderRadius: '6px', cursor: 'pointer', padding: '4px 8px', fontSize: '0.75rem', fontWeight: 600 }}
+            style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '6px', cursor: 'pointer', padding: '4px 8px', fontSize: '0.75rem', fontWeight: 600 }}
           >
             ESC
           </button>
         </div>
 
         {/* Popular Quick-Select Chips */}
-        <div style={{ padding: '10px 16px', background: '#080d16', borderBottom: '1px solid #161f30', display: 'flex', gap: '6px', overflowX: 'auto', alignItems: 'center' }}>
+        <div style={{ padding: '10px 16px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: '6px', overflowX: 'auto', alignItems: 'center' }}>
           <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', whiteSpace: 'nowrap', marginRight: '4px' }}>
             Trending:
           </span>
@@ -143,11 +142,11 @@ export default function StockSearchModal({
                 onClose();
               }}
               style={{
-                background: 'rgba(255, 255, 255, 0.04)',
-                color: '#cbd5e1',
-                border: '1px solid #1e293b',
+                background: '#ffffff',
+                color: '#334155',
+                border: '1px solid #cbd5e1',
                 borderRadius: '6px',
-                padding: '3px 9px',
+                padding: '4px 10px',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -158,12 +157,14 @@ export default function StockSearchModal({
                 transition: 'all 0.15s ease'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#38bdf8';
-                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.borderColor = '#059669';
+                e.currentTarget.style.color = '#059669';
+                e.currentTarget.style.background = '#ecfdf5';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#1e293b';
-                e.currentTarget.style.color = '#cbd5e1';
+                e.currentTarget.style.borderColor = '#cbd5e1';
+                e.currentTarget.style.color = '#334155';
+                e.currentTarget.style.background = '#ffffff';
               }}
             >
               <span>{p.label}</span>
@@ -172,19 +173,19 @@ export default function StockSearchModal({
         </div>
 
         {/* Category Filters */}
-        <div style={{ padding: '8px 16px', borderBottom: '1px solid #161f30', display: 'flex', gap: '6px', overflowX: 'auto', background: '#0c121e' }}>
+        <div style={{ padding: '8px 16px', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: '6px', overflowX: 'auto', background: '#ffffff' }}>
           {categories.map(c => (
             <button
               key={c.id}
               onClick={() => setCategoryFilter(c.id)}
               style={{
-                background: categoryFilter === c.id ? '#2563eb' : 'transparent',
-                color: categoryFilter === c.id ? '#fff' : '#94a3b8',
-                border: `1px solid ${categoryFilter === c.id ? '#3b82f6' : '#1e293b'}`,
+                background: categoryFilter === c.id ? '#ecfdf5' : 'transparent',
+                color: categoryFilter === c.id ? '#047857' : '#64748b',
+                border: `1px solid ${categoryFilter === c.id ? '#a7f3d0' : 'transparent'}`,
                 borderRadius: '6px',
                 padding: '4px 10px',
-                fontSize: '0.72rem',
-                fontWeight: 600,
+                fontSize: '0.75rem',
+                fontWeight: 700,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap'
               }}
@@ -203,22 +204,22 @@ export default function StockSearchModal({
             }}
             style={{
               padding: '12px 20px',
-              background: 'linear-gradient(90deg, rgba(6, 182, 212, 0.12), rgba(59, 130, 246, 0.08))',
-              borderBottom: '1px solid rgba(6, 182, 212, 0.3)',
+              background: '#ecfdf5',
+              borderBottom: '1px solid #a7f3d0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               cursor: 'pointer',
-              color: '#38bdf8',
+              color: '#047857',
               fontSize: '0.88rem',
               fontWeight: 600
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Sparkles size={18} color="#38bdf8" />
+              <Sparkles size={18} color="#059669" />
               <span>Load Real Live Quote & Chart for <b>{directSymbol}</b> from Exchange</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', background: '#0284c7', color: '#fff', padding: '3px 8px', borderRadius: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', background: '#059669', color: '#fff', padding: '3px 8px', borderRadius: '4px' }}>
               <span>Press Enter</span>
               <ArrowRight size={14} />
             </div>
@@ -226,10 +227,10 @@ export default function StockSearchModal({
         )}
 
         {/* Results List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '10px', background: '#ffffff' }}>
           {loading && results.length === 0 ? (
-            <div style={{ padding: '50px 20px', textAlign: 'center', color: '#38bdf8', fontSize: '0.9rem' }}>
-              <div className="pulse-live" style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#38bdf8', margin: '0 auto 12px auto' }} />
+            <div style={{ padding: '50px 20px', textAlign: 'center', color: '#059669', fontSize: '0.9rem' }}>
+              <div className="pulse-live" style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#059669', margin: '0 auto 12px auto' }} />
               Connecting to Live Exchanges...
             </div>
           ) : filteredResults.length === 0 ? (
@@ -256,9 +257,9 @@ export default function StockSearchModal({
                     borderRadius: '8px',
                     cursor: 'pointer',
                     transition: 'background 0.15s ease',
-                    borderBottom: '1px solid #161f30'
+                    borderBottom: '1px solid #f1f5f9'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#f0fdf4'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -267,10 +268,10 @@ export default function StockSearchModal({
                       height: '36px', 
                       borderRadius: '8px', 
                       background: isIndex 
-                        ? 'rgba(245, 158, 11, 0.15)' 
-                        : (isETF ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)'),
-                      color: isIndex ? '#fbbf24' : (isETF ? '#34d399' : '#60a5fa'),
-                      border: `1px solid ${isIndex ? 'rgba(245, 158, 11, 0.3)' : (isETF ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)')}`,
+                        ? '#fffbeb' 
+                        : (isETF ? '#ecfdf5' : '#f0fdf4'),
+                      color: isIndex ? '#b45309' : '#047857',
+                      border: `1px solid ${isIndex ? '#fde68a' : '#a7f3d0'}`,
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center',
@@ -281,37 +282,37 @@ export default function StockSearchModal({
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>
                           {stock.shortName || stock.name || stock.symbol}
                         </span>
                         <span style={{ 
                           fontSize: '0.68rem', 
                           fontWeight: 700,
-                          color: '#38bdf8', 
-                          background: 'rgba(56, 189, 248, 0.12)', 
-                          border: '1px solid rgba(56, 189, 248, 0.25)',
+                          color: '#059669', 
+                          background: '#ecfdf5', 
+                          border: '1px solid #a7f3d0',
                           padding: '1px 6px', 
                           borderRadius: '4px' 
                         }}>
                           {stock.exchange || 'EXCHANGE'}
                         </span>
                         {isIndex && (
-                          <span style={{ fontSize: '0.65rem', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.12)', padding: '1px 5px', borderRadius: '4px', fontWeight: 600 }}>
+                          <span style={{ fontSize: '0.65rem', color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', padding: '1px 5px', borderRadius: '4px', fontWeight: 600 }}>
                             INDEX
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
-                        <span style={{ color: '#cbd5e1' }}>{stock.name}</span> • <span style={{ color: '#64748b' }}>{stock.sector || 'Equities'}</span>
+                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                        <span style={{ color: '#334155' }}>{stock.name}</span> • <span style={{ color: '#64748b' }}>{stock.sector || 'Equities'}</span>
                       </div>
                     </div>
                   </div>
 
                   <div style={{ textAlign: 'right' }}>
-                    <div className="font-mono" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#94a3b8' }}>
+                    <div className="font-mono" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>
                       {stock.symbol}
                     </div>
-                    <div style={{ fontSize: '0.7rem', color: '#38bdf8', marginTop: '2px', fontWeight: 600 }}>
+                    <div style={{ fontSize: '0.7rem', color: '#059669', marginTop: '2px', fontWeight: 700 }}>
                       Click to Chart →
                     </div>
                   </div>

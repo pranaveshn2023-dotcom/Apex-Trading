@@ -14,6 +14,7 @@ import {
   initPortfolio,
   getPortfolioSummary,
   placeOrder,
+  cancelOrder,
   closePosition,
   resetPortfolio,
   updateCashBalance,
@@ -40,10 +41,11 @@ const PUBLIC_DIR = path.resolve(__dirname, '../public');
 const app = express();
 const PORT = process.env.PORT || 5173;
 
-// 1. Security Headers (Helmet)
+// 1. Security Headers (Helmet) - allow popups for Google OAuth communication
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
@@ -246,6 +248,20 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
 });
 
 /**
+ * POST /api/orders/:id/cancel
+ */
+app.post('/api/orders/:id/cancel', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cancelled = await cancelOrder(id);
+    const summary = await getPortfolioSummary();
+    res.json({ success: true, data: cancelled, portfolio: summary });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * POST /api/positions/:id/close
  */
 app.post('/api/positions/:id/close', async (req, res) => {
@@ -332,8 +348,10 @@ app.get('/api/auth/config', (req, res) => {
 
 app.post('/api/auth/google', authLimiter, async (req, res) => {
   try {
-    const { credential, profile } = req.body;
-    const user = await handleGoogleAuth({ credential, profile });
+    const { credential, profile, accessToken } = req.body;
+    console.log('[Auth API] Received login request, hasToken:', !!accessToken, 'hasCredential:', !!credential, 'hasProfile:', !!profile);
+    const user = await handleGoogleAuth({ credential, profile, accessToken });
+    console.log('[Auth API] Successfully authenticated user:', user.email);
     
     // Create HttpOnly session with cryptographic device fingerprint
     const { sessionId } = await createSecureSession(req, res, user);
@@ -346,6 +364,7 @@ app.post('/api/auth/google', authLimiter, async (req, res) => {
       } 
     });
   } catch (err) {
+    console.error('[Auth API] Authentication failure:', err.message);
     res.status(400).json({ success: false, error: err.message });
   }
 });

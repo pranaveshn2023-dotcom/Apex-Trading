@@ -62,12 +62,15 @@ export default function KiteFunds({
     <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Header Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px', borderBottom: '1px solid #1e293b', paddingBottom: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
         <div>
-          <h1 style={{ fontSize: '1.45rem', fontWeight: 700, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Wallet size={22} color="#38bdf8" /> Equity Funds & Virtual Margin (₹ INR)
+          <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ background: '#ecfdf5', padding: '6px', borderRadius: '8px', color: '#059669', display: 'flex', alignItems: 'center' }}>
+              <Wallet size={20} />
+            </div>
+            Equity Funds & Virtual Margin (₹ INR)
           </h1>
-          <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '4px 0 0 0' }}>
+          <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '4px 0 0 0' }}>
             Manage your virtual trading funds. Deposit or adjust capital anytime with zero financial risk.
           </p>
         </div>
@@ -81,26 +84,26 @@ export default function KiteFunds({
             }
           }}
           className="btn-ghost"
-          style={{ fontSize: '0.825rem', color: '#f43f5e', borderColor: 'rgba(244,63,94,0.3)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          style={{ fontSize: '0.825rem', color: '#be123c', borderColor: '#fecdd3', background: '#fff1f2', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
           <RotateCcw size={14} /> Reset Account / Set Capital
         </button>
       </div>
 
       {successMsg && (
-        <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#86efac', padding: '12px 16px', borderRadius: '8px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857', padding: '12px 16px', borderRadius: '8px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <CheckCircle2 size={18} /> {successMsg}
         </div>
       )}
 
-      {/* Top 3 Metric Cards (Zerodha Kite Style) */}
+      {/* Top 3 Metric Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
         
-        <div className="glass-panel" style={{ padding: '20px' }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+        <div className="glass-panel" style={{ padding: '20px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px', fontWeight: 600 }}>
             Available Cash Margin
           </div>
-          <div className="font-mono" style={{ fontSize: '2rem', fontWeight: 800, color: '#10b981' }}>
+          <div className="font-mono" style={{ fontSize: '2rem', fontWeight: 800, color: '#059669' }}>
             {formatINR(cashBalance)}
           </div>
           <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px' }}>
@@ -108,11 +111,11 @@ export default function KiteFunds({
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '20px' }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+        <div className="glass-panel" style={{ padding: '20px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px', fontWeight: 600 }}>
             Used Margin (Holdings & Trades)
           </div>
-          <div className="font-mono" style={{ fontSize: '2rem', fontWeight: 800, color: '#cbd5e1' }}>
+          <div className="font-mono" style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a' }}>
             {formatINR(totalInvested)}
           </div>
           <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px' }}>
@@ -120,11 +123,11 @@ export default function KiteFunds({
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '20px' }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+        <div className="glass-panel" style={{ padding: '20px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px', fontWeight: 600 }}>
             Total Account Net Worth
           </div>
-          <div className="font-mono" style={{ fontSize: '2rem', fontWeight: 800, color: '#38bdf8' }}>
+          <div className="font-mono" style={{ fontSize: '2rem', fontWeight: 800, color: '#0284c7' }}>
             {formatINR(totalValue)}
           </div>
           <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px' }}>
@@ -133,15 +136,15 @@ export default function KiteFunds({
         </div>
       </div>
 
-      {/* Two Column Section: Quick Top-Up & Margin Statement (collapses on mobile) */}
+      {/* Two Column Section: Quick Top-Up & Margin Statement */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
         
-        {/* Left: Instant Add Funds (Zerodha / Groww style Paper Money Deposit) */}
-        <div className="glass-panel" style={{ padding: '24px' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Plus size={18} color="#10b981" /> Instant Virtual Cash Deposit
+        {/* Left: Instant Add Funds */}
+        <div className="glass-panel" style={{ padding: '24px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Plus size={18} color="#059669" /> Instant Virtual Cash Deposit
           </h2>
-          <p style={{ fontSize: '0.825rem', color: '#94a3b8', marginBottom: '16px' }}>
+          <p style={{ fontSize: '0.825rem', color: '#64748b', marginBottom: '16px' }}>
             Add paper funds to test larger trade setups or position sizing. No real money required.
           </p>
 
@@ -152,15 +155,25 @@ export default function KiteFunds({
                 disabled={loading}
                 onClick={() => handleAddQuick(q.amount)}
                 style={{
-                  background: 'rgba(56, 189, 248, 0.08)',
-                  border: '1px solid rgba(56, 189, 248, 0.25)',
-                  color: '#38bdf8',
-                  borderRadius: '6px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  color: '#0f172a',
+                  borderRadius: '8px',
                   padding: '10px 8px',
                   fontWeight: 700,
                   fontSize: '0.85rem',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#059669';
+                  e.currentTarget.style.color = '#059669';
+                  e.currentTarget.style.background = '#ecfdf5';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.color = '#0f172a';
+                  e.currentTarget.style.background = '#f8fafc';
                 }}
               >
                 {q.label}
@@ -168,8 +181,8 @@ export default function KiteFunds({
             ))}
           </div>
 
-          <form onSubmit={handleSetExact} style={{ borderTop: '1px solid #1e293b', paddingTop: '16px' }}>
-            <label style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+          <form onSubmit={handleSetExact} style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+            <label style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
               Or Set Exact Cash Balance (₹)
             </label>
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -182,13 +195,14 @@ export default function KiteFunds({
                 className="font-mono"
                 style={{
                   flex: 1,
-                  background: '#090d16',
-                  border: '1px solid #334155',
-                  color: '#fff',
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  color: '#0f172a',
                   padding: '10px 14px',
                   borderRadius: '6px',
                   fontSize: '1rem',
-                  fontWeight: 700
+                  fontWeight: 700,
+                  outline: 'none'
                 }}
               />
               <button
@@ -204,37 +218,37 @@ export default function KiteFunds({
         </div>
 
         {/* Right: Zerodha Style Margin Breakdown Statement */}
-        <div className="glass-panel" style={{ padding: '24px' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '16px' }}>
+        <div className="glass-panel" style={{ padding: '24px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', marginBottom: '16px' }}>
             Margin Statement
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #1e293b' }}>
-              <span style={{ color: '#94a3b8' }}>Opening Balance</span>
-              <span className="font-mono" style={{ color: '#fff', fontWeight: 600 }}>{formatINR(portfolio?.initialCapital || 1000000)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ color: '#64748b' }}>Opening Balance</span>
+              <span className="font-mono" style={{ color: '#0f172a', fontWeight: 600 }}>{formatINR(portfolio?.initialCapital || 1000000)}</span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #1e293b' }}>
-              <span style={{ color: '#94a3b8' }}>Available Cash</span>
-              <span className="font-mono" style={{ color: '#10b981', fontWeight: 700 }}>{formatINR(cashBalance)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ color: '#64748b' }}>Available Cash</span>
+              <span className="font-mono" style={{ color: '#059669', fontWeight: 700 }}>{formatINR(cashBalance)}</span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #1e293b' }}>
-              <span style={{ color: '#94a3b8' }}>Used Margin (Holdings)</span>
-              <span className="font-mono" style={{ color: '#cbd5e1' }}>{formatINR(totalInvested)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ color: '#64748b' }}>Used Margin (Holdings)</span>
+              <span className="font-mono" style={{ color: '#0f172a' }}>{formatINR(totalInvested)}</span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #1e293b' }}>
-              <span style={{ color: '#94a3b8' }}>Realized P&L</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ color: '#64748b' }}>Realized P&L</span>
               <span className={`font-mono ${realizedPnl >= 0 ? 'profit-text' : 'loss-text'}`} style={{ fontWeight: 700 }}>
                 {formatINR(realizedPnl, true)}
               </span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px', fontWeight: 700 }}>
-              <span style={{ color: '#38bdf8' }}>Total Collateral / Net Worth</span>
-              <span className="font-mono" style={{ color: '#38bdf8', fontSize: '1.05rem' }}>{formatINR(totalValue)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px', fontWeight: 700, borderTop: '1px solid #e2e8f0' }}>
+              <span style={{ color: '#0284c7' }}>Total Collateral / Net Worth</span>
+              <span className="font-mono" style={{ color: '#0284c7', fontSize: '1.05rem' }}>{formatINR(totalValue)}</span>
             </div>
           </div>
         </div>

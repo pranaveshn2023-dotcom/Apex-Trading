@@ -1,25 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --bg-main: #070a11;
-  --bg-surface: #0d131f;
-  --bg-surface-elevated: #131b2c;
-  --bg-card: rgba(19, 27, 44, 0.7);
-  --border-color: #1e293b;
-  --border-subtle: #152033;
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
+  --bg-main: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --bg-card: #ffffff;
+  --border-color: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  --text-main: #0f172a;
+  --text-muted: #475569;
   --text-dim: #64748b;
   
-  --profit: #10b981;
-  --profit-glow: rgba(16, 185, 129, 0.2);
-  --loss: #f43f5e;
-  --loss-glow: rgba(244, 63, 94, 0.2);
+  --profit: #059669;
+  --profit-glow: rgba(5, 150, 105, 0.2);
+  --loss: #e11d48;
+  --loss-glow: rgba(225, 29, 72, 0.15);
   
-  --accent-cyan: #06b6d4;
-  --accent-blue: #3b82f6;
-  --accent-purple: #8b5cf6;
-  --accent-amber: #f59e0b;
+  --accent-cyan: #0284c7;
+  --accent-blue: #2563eb;
+  --accent-purple: #7c3aed;
+  --accent-amber: #d97706;
+  --accent-green: #10b981;
+  --accent-emerald: #059669;
   
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -50,11 +52,11 @@ body {
   background: var(--bg-main);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #94a3b8;
 }
 
 /* Typography & Numerics */
@@ -70,30 +72,29 @@ body {
 }
 
 .profit-bg {
-  background-color: rgba(16, 185, 129, 0.12);
-  color: var(--profit);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
 }
 .loss-bg {
-  background-color: rgba(244, 63, 94, 0.12);
-  color: var(--loss);
-  border: 1px solid rgba(244, 63, 94, 0.25);
+  background-color: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
 }
 
-/* Glass Card */
+/* Crisp White + Green Card System */
 .glass-panel {
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px -2px rgba(16, 185, 129, 0.05), 0 2px 8px -2px rgba(0, 0, 0, 0.04);
 }
 
 .glass-panel-elevated {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 0 20px rgba(16, 185, 129, 0.08);
 }
 
 /* Interactive Elements */
@@ -102,10 +103,10 @@ button, input, select, textarea {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: #fff;
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #ffffff;
   border: none;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 8px;
   padding: 8px 16px;
   cursor: pointer;
@@ -114,51 +115,52 @@ button, input, select, textarea {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.28);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  background: linear-gradient(135deg, #047857, #059669);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.38);
   transform: translateY(-1px);
 }
 
 .btn-buy {
   background: linear-gradient(135deg, #059669, #10b981);
-  color: #fff;
+  color: #ffffff;
   border: none;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 8px;
   padding: 10px 20px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px var(--profit-glow);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
 }
 .btn-buy:hover {
-  background: linear-gradient(135deg, #10b981, #34d399);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  background: linear-gradient(135deg, #047857, #059669);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.42);
   transform: translateY(-1px);
 }
 
 .btn-sell {
   background: linear-gradient(135deg, #e11d48, #f43f5e);
-  color: #fff;
+  color: #ffffff;
   border: none;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 8px;
   padding: 10px 20px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px var(--loss-glow);
+  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.25);
 }
 .btn-sell:hover {
-  background: linear-gradient(135deg, #f43f5e, #fb7185);
-  box-shadow: 0 6px 20px rgba(244, 63, 94, 0.4);
+  background: linear-gradient(135deg, #be123c, #e11d48);
+  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.35);
   transform: translateY(-1px);
 }
 
 .btn-ghost {
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--border-color);
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 6px 12px;
   cursor: pointer;
@@ -168,9 +170,9 @@ button, input, select, textarea {
   gap: 6px;
 }
 .btn-ghost:hover {
-  background: var(--bg-surface-elevated);
-  color: var(--text-main);
-  border-color: #334155;
+  background: #f0fdf4;
+  color: #047857;
+  border-color: #a7f3d0;
 }
 
 /* Tab Navigation */
@@ -178,25 +180,25 @@ button, input, select, textarea {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  padding: 10px 18px;
-  font-weight: 500;
-  font-size: 0.925rem;
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 0.88rem;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 .nav-tab:hover {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.04);
+  color: #047857;
+  background: #f0fdf4;
 }
 .nav-tab.active {
-  color: #fff;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
 }
 
 /* Animations */
@@ -231,20 +233,21 @@ button, input, select, textarea {
 .terminal-table th {
   text-align: left;
   padding: 10px 14px;
+  background: #f8fafc;
   color: var(--text-dim);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #e2e8f0;
 }
 .terminal-table td {
   padding: 12px 14px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid #f1f5f9;
   color: var(--text-main);
 }
 .terminal-table tr:hover td {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: #f0fdf4;
 }
 
 /* Modal Overlay */
@@ -254,7 +257,7 @@ button, input, select, textarea {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(4, 7, 13, 0.8);
+  background: rgba(15, 23, 42, 0.32);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -264,11 +267,23 @@ button, input, select, textarea {
 }
 
 /* ============================================================
-   RESPONSIVE / ADAPTIVE (Mobile-first overrides)
+   RESPONSIVE / ADAPTIVE (Mobile & Tablet Architecture)
    ============================================================ */
 
-/* Mobile-only elements are hidden by default on desktop */
+/* Utility visibility classes */
 .show-mobile {
+  display: none !important;
+}
+
+.show-vertical {
+  display: none !important;
+}
+
+.show-under-1024 {
+  display: none !important;
+}
+
+.show-under-1400 {
   display: none !important;
 }
 
@@ -276,11 +291,13 @@ button, input, select, textarea {
   display: none !important;
 }
 
-@media (max-width: 900px) {
-  .hide-mobile {
+/* Vertical screens (portrait orientation) & screens <= 1024px:
+   Use bottom nav instead of top nav to optimize UX and thumb reachability */
+@media (max-width: 1024px), (orientation: portrait) {
+  .hide-vertical {
     display: none !important;
   }
-  .show-mobile {
+  .show-vertical {
     display: flex !important;
   }
   .mobile-bottom-nav {
@@ -288,10 +305,7 @@ button, input, select, textarea {
   }
 }
 
-.show-under-1400 {
-  display: none !important;
-}
-
+/* Screens under 1400px */
 @media (max-width: 1400px) {
   .hide-under-1400 {
     display: none !important;
@@ -301,9 +315,107 @@ button, input, select, textarea {
   }
 }
 
+/* Screens under 1200px */
 @media (max-width: 1200px) {
   .hide-under-1200 {
     display: none !important;
+  }
+}
+
+/* Screens under 1024px (Tablets & Mobile) */
+@media (max-width: 1024px) {
+  .show-under-1024 {
+    display: flex !important;
+  }
+  .hide-under-1024 {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+  .show-mobile {
+    display: flex !important;
+  }
+  .show-mobile-block {
+    display: block !important;
+  }
+  .desktop-table-container {
+    display: none !important;
+  }
+  .mobile-card-list {
+    display: flex !important;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Full-width bottom-sheet style modals on phones */
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modal-overlay > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh !important;
+    border-radius: 14px 14px 0 0 !important;
+  }
+
+  /* Tables become swipeable panels */
+  .terminal-table {
+    min-width: 600px;
+  }
+
+  /* Responsive Stock Header Ranges */
+  .stock-header-ranges {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+  }
+  .stock-header-ranges > div {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Responsive Trading Chart Canvas */
+  .trading-chart-canvas {
+    min-height: 320px !important;
+  }
+
+  /* Compact Option Chain on Mobile */
+  .option-chain-table th, .option-chain-table td {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  /* Comfortable tap targets */
+  .nav-tab {
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+  .btn-buy, .btn-sell {
+    padding: 12px 20px;
+  }
+  button, a, input, select, textarea {
+    touch-action: manipulation;
+  }
+}
+
+@media (min-width: 769px) {
+  .show-mobile-block {
+    display: none !important;
+  }
+  .mobile-card-list {
+    display: none !important;
+  }
+  .desktop-table-container {
+    display: block !important;
   }
 }
 
@@ -323,7 +435,7 @@ button, input, select, textarea {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(4, 7, 13, 0.7);
+  background: rgba(15, 23, 42, 0.32);
   backdrop-filter: blur(6px);
   z-index: 150;
   display: flex;
@@ -333,54 +445,15 @@ button, input, select, textarea {
 .mobile-drawer {
   width: min(84vw, 340px);
   height: 100%;
-  background: #0d131f;
-  border-right: 1px solid #1f2a3d;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
   overflow-y: auto;
-  box-shadow: 8px 0 40px rgba(0, 0, 0, 0.6);
+  box-shadow: 8px 0 40px rgba(0, 0, 0, 0.12);
   animation: drawer-in 0.22s ease-out;
 }
 @keyframes drawer-in {
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }
-}
-
-@media (max-width: 900px) {
-  /* Hide desktop-only chrome on small screens */
-  .hide-mobile {
-    display: none !important;
-  }
-  .show-mobile {
-    display: inline-flex !important;
-  }
-
-  /* Full-width bottom-sheet style modals on phones */
-  .modal-overlay {
-    padding: 0;
-    align-items: flex-end;
-  }
-  .modal-overlay > div {
-    width: 100% !important;
-    max-width: 100% !important;
-    max-height: 92dvh !important;
-    border-radius: 14px 14px 0 0 !important;
-  }
-
-  /* Tables become swipeable panels */
-  .terminal-table {
-    min-width: 640px;
-  }
-
-  /* Comfortable tap targets */
-  .nav-tab {
-    padding: 8px 12px;
-    white-space: nowrap;
-  }
-  .btn-buy, .btn-sell {
-    padding: 12px 20px;
-  }
-  button, a, input, select, textarea {
-    touch-action: manipulation;
-  }
 }
 
 @media (max-width: 480px) {

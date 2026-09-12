@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { formatINR } from '../utils/formatters';
 import confetti from 'canvas-confetti';
+import ApexLogo from './ApexLogo';
 
 export default function ProfileTab({
   currentUser,
@@ -95,13 +96,15 @@ export default function ProfileTab({
     const auth = localStorage.getItem('ax_current_user');
     const token = localStorage.getItem('ax_auth_token');
     const pin = localStorage.getItem('ax_terminal_pin');
+    const pwa = localStorage.getItem('apex_pwa_installed');
 
     localStorage.clear();
-    sessionStorage.clear();
 
+    // Preserve authentication and pin
     if (auth) localStorage.setItem('ax_current_user', auth);
     if (token) localStorage.setItem('ax_auth_token', token);
     if (pin) localStorage.setItem('ax_terminal_pin', pin);
+    if (pwa) localStorage.setItem('apex_pwa_installed', pwa);
 
     setCacheCleared(true);
     setTimeout(() => {
@@ -138,20 +141,21 @@ export default function ProfileTab({
       display: 'flex',
       flexDirection: 'column',
       gap: '24px',
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+      fontFamily: "'Outfit', -apple-system, BlinkMacSystemFont, sans-serif"
     }}>
       
       {/* 1. Profile Header Card */}
       <div style={{
-        background: 'linear-gradient(180deg, #0d1524 0%, #070c16 100%)',
-        border: '1px solid #1e293b',
-        borderRadius: '20px',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
         padding: '24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '16px'
+        gap: '16px',
+        boxShadow: '0 4px 20px -2px rgba(16, 185, 129, 0.05), 0 2px 8px -2px rgba(0, 0, 0, 0.04)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{
@@ -159,8 +163,8 @@ export default function ProfileTab({
             height: '64px',
             borderRadius: '50%',
             overflow: 'hidden',
-            border: '2.5px solid #10b981',
-            boxShadow: '0 0 20px rgba(16, 185, 129, 0.35)',
+            border: '2.5px solid #059669',
+            boxShadow: '0 0 16px rgba(5, 150, 105, 0.25)',
             flexShrink: 0
           }}>
             <img src={currentUser?.picture} alt={currentUser?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -168,14 +172,14 @@ export default function ProfileTab({
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#f8fafc', margin: 0, letterSpacing: '-0.02em' }}>
+              <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
                 {currentUser?.name || 'Apex Trader'}
               </h1>
               <span style={{
                 fontSize: '0.68rem',
-                background: 'rgba(16, 185, 129, 0.12)',
-                color: '#10b981',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                background: '#ecfdf5',
+                color: '#047857',
+                border: '1px solid #a7f3d0',
                 padding: '2px 8px',
                 borderRadius: '12px',
                 fontWeight: 700
@@ -183,7 +187,7 @@ export default function ProfileTab({
                 Verified Trader
               </span>
             </div>
-            <p style={{ fontSize: '0.84rem', color: '#94a3b8', margin: '4px 0 0 0' }}>
+            <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
               {currentUser?.email || 'trader@apex.internal'}
             </p>
           </div>
@@ -193,9 +197,9 @@ export default function ProfileTab({
           type="button"
           onClick={onLogout}
           style={{
-            background: 'rgba(244, 63, 94, 0.1)',
-            color: '#fda4af',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
+            background: '#fff1f2',
+            color: '#be123c',
+            border: '1px solid #fecdd3',
             padding: '9px 18px',
             borderRadius: '10px',
             fontWeight: 700,
@@ -207,12 +211,12 @@ export default function ProfileTab({
             transition: 'all 0.15s ease'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(244, 63, 94, 0.18)';
-            e.currentTarget.style.borderColor = '#f43f5e';
+            e.currentTarget.style.background = '#ffe4e6';
+            e.currentTarget.style.borderColor = '#fda4af';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)';
-            e.currentTarget.style.borderColor = 'rgba(244, 63, 94, 0.3)';
+            e.currentTarget.style.background = '#fff1f2';
+            e.currentTarget.style.borderColor = '#fecdd3';
           }}
         >
           <LogOut size={15} />
@@ -222,18 +226,21 @@ export default function ProfileTab({
 
       {/* 2. Virtual Funds & Margin Hub (Moved into Profile) */}
       <div style={{
-        background: '#0d131f',
-        border: '1px solid #1e293b',
-        borderRadius: '20px',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
         padding: '24px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px'
+        gap: '20px',
+        boxShadow: '0 4px 20px -2px rgba(16, 185, 129, 0.05), 0 2px 8px -2px rgba(0, 0, 0, 0.04)'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Wallet size={22} color="#38bdf8" />
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>
+            <div style={{ background: '#ecfdf5', padding: '6px', borderRadius: '8px', color: '#059669' }}>
+              <Wallet size={20} />
+            </div>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
               Virtual Funds & Margin (₹ INR)
             </h2>
           </div>
@@ -248,9 +255,9 @@ export default function ProfileTab({
               }
             }}
             style={{
-              background: 'transparent',
-              border: '1px solid rgba(244, 63, 94, 0.3)',
-              color: '#fda4af',
+              background: '#ffffff',
+              border: '1px solid #fecdd3',
+              color: '#be123c',
               padding: '6px 12px',
               borderRadius: '8px',
               fontSize: '0.78rem',
@@ -267,18 +274,18 @@ export default function ProfileTab({
         </div>
 
         {fundsSuccess && (
-          <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#86efac', padding: '10px 14px', borderRadius: '8px', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857', padding: '10px 14px', borderRadius: '8px', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <CheckCircle2 size={16} /> {fundsSuccess}
           </div>
         )}
 
         {/* 3 Metrics Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid #1e293b', borderRadius: '12px', padding: '18px' }}>
-            <div style={{ fontSize: '0.74rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '14px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+            <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px', fontWeight: 600 }}>
               Available Cash Margin
             </div>
-            <div className="font-mono" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#10b981' }}>
+            <div className="font-mono" style={{ fontSize: 'clamp(1.35rem, 4vw, 1.85rem)', fontWeight: 800, color: '#059669' }}>
               {formatINR(cashBalance)}
             </div>
             <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '4px' }}>
@@ -286,11 +293,11 @@ export default function ProfileTab({
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid #1e293b', borderRadius: '12px', padding: '18px' }}>
-            <div style={{ fontSize: '0.74rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+            <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px', fontWeight: 600 }}>
               Used Margin (Holdings & Trades)
             </div>
-            <div className="font-mono" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#cbd5e1' }}>
+            <div className="font-mono" style={{ fontSize: 'clamp(1.35rem, 4vw, 1.85rem)', fontWeight: 800, color: '#0f172a' }}>
               {formatINR(totalInvested)}
             </div>
             <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '4px' }}>
@@ -298,11 +305,11 @@ export default function ProfileTab({
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid #1e293b', borderRadius: '12px', padding: '18px' }}>
-            <div style={{ fontSize: '0.74rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+            <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px', fontWeight: 600 }}>
               Total Account Net Worth
             </div>
-            <div className="font-mono" style={{ fontSize: '1.85rem', fontWeight: 800, color: '#38bdf8' }}>
+            <div className="font-mono" style={{ fontSize: 'clamp(1.35rem, 4vw, 1.85rem)', fontWeight: 800, color: '#0284c7' }}>
               {formatINR(totalValue)}
             </div>
             <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '4px' }}>
@@ -313,8 +320,8 @@ export default function ProfileTab({
 
         {/* Deposit Virtual Cash */}
         <div style={{
-          background: 'rgba(16, 185, 129, 0.04)',
-          border: '1px solid rgba(16, 185, 129, 0.2)',
+          background: '#f0fdf4',
+          border: '1px solid #a7f3d0',
           borderRadius: '14px',
           padding: '20px',
           display: 'flex',
@@ -322,10 +329,10 @@ export default function ProfileTab({
           gap: '16px'
         }}>
           <div>
-            <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#f8fafc', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Plus size={16} color="#10b981" /> Instant Virtual Cash Deposit
+            <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#0f172a', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Plus size={16} color="#059669" /> Instant Virtual Cash Deposit
             </h3>
-            <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: 0 }}>
+            <p style={{ fontSize: '0.78rem', color: '#475569', margin: 0 }}>
               Add paper funds to test aggressive strategies and high-margin sizing. Zero real money involved.
             </p>
           </div>
@@ -339,9 +346,9 @@ export default function ProfileTab({
                 onClick={() => handleAddQuick(item.amount)}
                 disabled={fundsLoading}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid #1e293b',
-                  color: '#e2e8f0',
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  color: '#0f172a',
                   padding: '7px 14px',
                   borderRadius: '8px',
                   fontSize: '0.78rem',
@@ -350,12 +357,14 @@ export default function ProfileTab({
                   transition: 'all 0.15s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#10b981';
-                  e.currentTarget.style.color = '#10b981';
+                  e.currentTarget.style.borderColor = '#059669';
+                  e.currentTarget.style.color = '#059669';
+                  e.currentTarget.style.background = '#f0fdf4';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#1e293b';
-                  e.currentTarget.style.color = '#e2e8f0';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                  e.currentTarget.style.color = '#0f172a';
+                  e.currentTarget.style.background = '#ffffff';
                 }}
               >
                 {item.label}
@@ -372,10 +381,10 @@ export default function ProfileTab({
               onChange={(e) => setCustomAmount(e.target.value)}
               style={{
                 flex: 1,
-                minWidth: '220px',
-                background: '#070a11',
-                border: '1px solid #1e293b',
-                color: '#f8fafc',
+                minWidth: 'min(220px, 100%)',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: '#0f172a',
                 padding: '9px 14px',
                 borderRadius: '8px',
                 fontSize: '0.84rem',
@@ -386,14 +395,15 @@ export default function ProfileTab({
               type="submit"
               disabled={fundsLoading || !customAmount}
               style={{
-                background: '#10b981',
+                background: 'linear-gradient(135deg, #059669, #10b981)',
                 border: 'none',
                 color: '#ffffff',
                 padding: '9px 18px',
                 borderRadius: '8px',
                 fontSize: '0.84rem',
                 fontWeight: 700,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
               }}
             >
               Set Exact Balance
@@ -404,24 +414,25 @@ export default function ProfileTab({
 
       {/* 3. Security & Screen Lock */}
       <div style={{
-        background: '#0d131f',
-        border: '1px solid #1e293b',
-        borderRadius: '20px',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
         padding: '24px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '16px'
+        gap: '16px',
+        boxShadow: '0 4px 20px -2px rgba(16, 185, 129, 0.05), 0 2px 8px -2px rgba(0, 0, 0, 0.04)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Lock size={20} color="#10b981" />
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#ecfdf5', border: '1px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Lock size={20} color="#059669" />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
                 Screen Lock & Privacy Protection
               </h2>
-              <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '2px 0 0 0' }}>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '2px 0 0 0' }}>
                 Quickly lock your terminal screen when stepping away to protect positions and balance.
               </p>
             </div>
@@ -432,7 +443,7 @@ export default function ProfileTab({
               type="button"
               onClick={onLockScreen}
               style={{
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                 color: '#ffffff',
                 border: 'none',
                 padding: '8px 16px',
@@ -443,7 +454,7 @@ export default function ProfileTab({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)'
+                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
               }}
             >
               <Lock size={13} />
@@ -454,9 +465,9 @@ export default function ProfileTab({
               type="button"
               onClick={() => setShowPinModal(true)}
               style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                color: '#cbd5e1',
-                border: '1px solid #334155',
+                background: '#ffffff',
+                color: '#0f172a',
+                border: '1px solid #cbd5e1',
                 padding: '8px 14px',
                 borderRadius: '8px',
                 fontWeight: 600,
@@ -474,8 +485,8 @@ export default function ProfileTab({
         </div>
 
         <div style={{
-          background: 'rgba(255, 255, 255, 0.02)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
           borderRadius: '10px',
           padding: '12px 16px',
           display: 'flex',
@@ -485,57 +496,60 @@ export default function ProfileTab({
           gap: '10px',
           fontSize: '0.82rem'
         }}>
-          <span style={{ color: '#94a3b8' }}>
-            Status: <b style={{ color: '#10b981' }}>Active with 4-digit PIN ({currentPin.replace(/./g, '•')})</b>
+          <span style={{ color: '#475569' }}>
+            Status: <b style={{ color: '#059669' }}>Active with 4-digit PIN ({currentPin.replace(/./g, '•')})</b>
           </span>
           <span style={{ color: '#64748b' }}>
-            Quick Shortcut: <kbd style={{ background: '#1e293b', color: '#f8fafc', padding: '2px 6px', borderRadius: '4px' }}>Ctrl+L</kbd>
+            Quick Shortcut: <kbd style={{ background: '#e2e8f0', color: '#0f172a', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Ctrl+L</kbd>
           </span>
         </div>
       </div>
 
       {/* 4. Preferences & Trading Guide */}
       <div style={{
-        background: '#0d131f',
-        border: '1px solid #1e293b',
-        borderRadius: '20px',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
         padding: '24px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '16px'
+        gap: '16px',
+        boxShadow: '0 4px 20px -2px rgba(16, 185, 129, 0.05), 0 2px 8px -2px rgba(0, 0, 0, 0.04)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Sliders size={18} color="#a855f7" />
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+          <div style={{ background: '#f5f3ff', padding: '6px', borderRadius: '8px', color: '#7c3aed' }}>
+            <Sliders size={18} />
+          </div>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
             Trading Guides & Preferences
           </h2>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
           <div>
-            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#f8fafc' }}>Beginner Assistance Mode</div>
-            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Shows helpful order type explainers, stop-loss guidance, and 1% risk badges.</div>
+            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>Beginner Assistance Mode</div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Shows helpful order type explainers, stop-loss guidance, and 1% risk badges.</div>
           </div>
           <input
             type="checkbox"
             checked={beginnerMode}
             onChange={(e) => setBeginnerMode(e.target.checked)}
-            style={{ width: '18px', height: '18px', accentColor: '#10b981', cursor: 'pointer' }}
+            style={{ width: '18px', height: '18px', accentColor: '#059669', cursor: 'pointer' }}
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
           <div>
-            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#f8fafc' }}>Interactive Trading Tips & Rulebook</div>
-            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Open institutional risk management and trading rulebook.</div>
+            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>Interactive Trading Tips & Rulebook</div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Open institutional risk management and trading rulebook.</div>
           </div>
           <button
             type="button"
             onClick={onOpenTips}
             style={{
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: '1px solid #334155',
-              color: '#f8fafc',
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
+              color: '#0f172a',
               padding: '6px 14px',
               borderRadius: '7px',
               fontSize: '0.78rem',
@@ -550,25 +564,26 @@ export default function ProfileTab({
 
       {/* 5. Storage & Clear Cache */}
       <div style={{
-        background: '#0d131f',
-        border: '1px solid #1e293b',
-        borderRadius: '20px',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
         padding: '24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '16px'
+        gap: '16px',
+        boxShadow: '0 4px 20px -2px rgba(16, 185, 129, 0.05), 0 2px 8px -2px rgba(0, 0, 0, 0.04)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Database size={20} color="#f59e0b" />
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#fffbeb', border: '1px solid #fde68a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Database size={20} color="#d97706" />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+            <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
               Cache & Local State
             </h2>
-            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '2px 0 0 0' }}>
+            <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '2px 0 0 0' }}>
               Purges local quotes cache and resets offline buffers while keeping your authentication intact.
             </p>
           </div>
@@ -579,9 +594,9 @@ export default function ProfileTab({
           onClick={handleClearCache}
           disabled={cacheCleared}
           style={{
-            background: cacheCleared ? '#10b981' : 'rgba(245, 158, 11, 0.12)',
-            color: cacheCleared ? '#ffffff' : '#f59e0b',
-            border: cacheCleared ? 'none' : '1px solid rgba(245, 158, 11, 0.4)',
+            background: cacheCleared ? '#059669' : '#fffbeb',
+            color: cacheCleared ? '#ffffff' : '#b45309',
+            border: cacheCleared ? 'none' : '1px solid #fde68a',
             padding: '9px 16px',
             borderRadius: '8px',
             fontWeight: 700,
@@ -599,42 +614,29 @@ export default function ProfileTab({
 
       {/* 6. About Apex Trading & Institutional Brokerage Architecture */}
       <div style={{
-        background: '#0d131f',
-        border: '1px solid #1e293b',
-        borderRadius: '20px',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
         padding: '28px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '24px'
+        gap: '24px',
+        boxShadow: '0 4px 20px -2px rgba(16, 185, 129, 0.05), 0 2px 8px -2px rgba(0, 0, 0, 0.04)'
       }}>
         {/* Header with Emblem */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '14px',
-              overflow: 'hidden',
-              border: '1.5px solid rgba(16, 185, 129, 0.5)',
-              boxShadow: '0 0 20px rgba(16, 185, 129, 0.25)',
-              background: '#050912',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <img src="/logo.png" alt="Apex Trading" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
+            <ApexLogo size={48} withGlow={true} />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc', margin: 0, letterSpacing: '-0.02em' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
                   Apex Trading Platform
                 </h2>
                 <span style={{
                   fontSize: '0.68rem',
-                  background: 'rgba(56, 189, 248, 0.12)',
-                  color: '#38bdf8',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  background: '#f0f9ff',
+                  color: '#0284c7',
+                  border: '1px solid #bae6fd',
                   padding: '2px 8px',
                   borderRadius: '10px',
                   fontWeight: 700
@@ -642,7 +644,7 @@ export default function ProfileTab({
                   v2.4.0 Production
                 </span>
               </div>
-              <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '3px 0 0 0' }}>
+              <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '3px 0 0 0' }}>
                 Next-generation simulated market terminal & algorithm training environment.
               </p>
             </div>
@@ -651,9 +653,9 @@ export default function ProfileTab({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{
               fontSize: '0.72rem',
-              color: '#10b981',
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.25)',
+              color: '#059669',
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
               padding: '4px 10px',
               borderRadius: '8px',
               fontWeight: 600,
@@ -661,25 +663,25 @@ export default function ProfileTab({
               alignItems: 'center',
               gap: '6px'
             }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#059669' }} />
               Live Gateway Active
             </span>
           </div>
         </div>
 
-        <p style={{ fontSize: '0.84rem', color: '#cbd5e1', lineHeight: 1.6, margin: 0 }}>
+        <p style={{ fontSize: '0.84rem', color: '#475569', lineHeight: 1.6, margin: 0 }}>
           Apex Trading provides retail and institutional traders with high-fidelity paper trading across Indian and global equity markets. Experience real exchange liquidity, live multi-timeframe candlestick charting, and precision risk management with 100% simulated capital.
         </p>
 
-        {/* Official Brokerage & Fee Rate Card (Groww Model) */}
+        {/* Official Brokerage & Fee Rate Card */}
         <div>
-          <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#f8fafc', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Equity & Derivatives Brokerage Schedule
           </h3>
 
           <div style={{
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid #1e293b',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: '12px',
             overflow: 'hidden'
           }}>
@@ -687,11 +689,11 @@ export default function ProfileTab({
               display: 'grid',
               gridTemplateColumns: '1.4fr 1.2fr 1.2fr 1fr',
               padding: '10px 16px',
-              background: 'rgba(255, 255, 255, 0.03)',
-              borderBottom: '1px solid #1e293b',
+              background: '#f8fafc',
+              borderBottom: '1px solid #e2e8f0',
               fontSize: '0.74rem',
               fontWeight: 700,
-              color: '#94a3b8',
+              color: '#64748b',
               textTransform: 'uppercase',
               letterSpacing: '0.03em'
             }}>
@@ -733,24 +735,24 @@ export default function ProfileTab({
                   display: 'grid',
                   gridTemplateColumns: '1.4fr 1.2fr 1.2fr 1fr',
                   padding: '12px 16px',
-                  borderBottom: idx < 2 ? '1px solid rgba(255, 255, 255, 0.04)' : 'none',
+                  borderBottom: idx < 2 ? '1px solid #f1f5f9' : 'none',
                   fontSize: '0.8rem',
                   alignItems: 'center'
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 700, color: '#f8fafc' }}>{row.segment}</div>
+                  <div style={{ fontWeight: 700, color: '#0f172a' }}>{row.segment}</div>
                   <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px' }}>{row.badge}</div>
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, color: '#10b981' }}>{row.brokerage}</div>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>{row.subBrokerage}</div>
+                  <div style={{ fontWeight: 700, color: '#059669' }}>{row.brokerage}</div>
+                  <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px' }}>{row.subBrokerage}</div>
                 </div>
                 <div>
-                  <div style={{ color: '#cbd5e1' }}>{row.stt}</div>
+                  <div style={{ color: '#334155' }}>{row.stt}</div>
                 </div>
                 <div>
-                  <div style={{ color: '#94a3b8' }}>{row.taxes}</div>
+                  <div style={{ color: '#64748b' }}>{row.taxes}</div>
                 </div>
               </div>
             ))}
@@ -759,35 +761,35 @@ export default function ProfileTab({
 
         {/* 4 Feature Badges */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '10px', padding: '12px 14px' }}>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f8fafc', marginBottom: '3px' }}>⚡ Sub-Second Liquidity</div>
-            <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>Real-time quotes with bid/ask book replication.</div>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 14px' }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a', marginBottom: '3px' }}>⚡ Sub-Second Liquidity</div>
+            <div style={{ fontSize: '0.74rem', color: '#64748b' }}>Real-time quotes with bid/ask book replication.</div>
           </div>
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '10px', padding: '12px 14px' }}>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f8fafc', marginBottom: '3px' }}>🛡️ 1% Capital Risk Rule</div>
-            <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>Integrated risk-reward & sizing calculations.</div>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 14px' }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a', marginBottom: '3px' }}>🛡️ 1% Capital Risk Rule</div>
+            <div style={{ fontSize: '0.74rem', color: '#64748b' }}>Integrated risk-reward & sizing calculations.</div>
           </div>
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '10px', padding: '12px 14px' }}>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f8fafc', marginBottom: '3px' }}>🔒 4-Digit Screen Lock</div>
-            <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>Instant terminal security with biometric shortcuts.</div>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 14px' }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a', marginBottom: '3px' }}>🔒 4-Digit Screen Lock</div>
+            <div style={{ fontSize: '0.74rem', color: '#64748b' }}>Instant terminal security with biometric shortcuts.</div>
           </div>
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '10px', padding: '12px 14px' }}>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f8fafc', marginBottom: '3px' }}>📊 Interactive Charting</div>
-            <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>High-resolution candlestick & volume indicators.</div>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 14px' }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a', marginBottom: '3px' }}>📊 Interactive Charting</div>
+            <div style={{ fontSize: '0.74rem', color: '#64748b' }}>High-resolution candlestick & volume indicators.</div>
           </div>
         </div>
 
         {/* Regulatory Disclaimer Banner */}
         <div style={{
-          background: 'rgba(15, 23, 42, 0.6)',
-          border: '1px solid rgba(148, 163, 184, 0.15)',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
           borderRadius: '12px',
           padding: '14px 16px',
           fontSize: '0.75rem',
-          color: '#94a3b8',
+          color: '#64748b',
           lineHeight: 1.5
         }}>
-          <strong style={{ color: '#cbd5e1' }}>Regulatory & Simulation Notice: </strong>
+          <strong style={{ color: '#0f172a' }}>Regulatory & Simulation Notice: </strong>
           Apex Trading is an institutional-grade educational simulation and algorithmic testing terminal. All balances, orders, ledger debits, and profit/loss figures are purely virtual for risk-free strategy evaluation. Live market quotes are streamed via public market gateways for real-world execution practice without capital risk.
         </div>
       </div>
@@ -797,8 +799,8 @@ export default function ProfileTab({
         <div style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(4, 7, 13, 0.85)',
-          backdropFilter: 'blur(10px)',
+          background: 'rgba(15, 23, 42, 0.45)',
+          backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -807,27 +809,28 @@ export default function ProfileTab({
         }}>
           <div style={{
             width: '360px',
-            background: '#0d131f',
-            border: '1px solid #1e293b',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: '16px',
             padding: '28px 24px',
-            textAlign: 'center'
+            textAlign: 'center',
+            boxShadow: '0 20px 40px -15px rgba(0,0,0,0.15)'
           }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#f8fafc', margin: '0 0 6px 0' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '0 0 6px 0' }}>
               Change Security PIN
             </h3>
-            <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: '0 0 20px 0' }}>
+            <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '0 0 20px 0' }}>
               Set a new 4-digit numeric PIN for your screen lock.
             </p>
 
             {pinError && (
-              <div style={{ background: 'rgba(244, 63, 94, 0.12)', border: '1px solid rgba(244, 63, 94, 0.3)', color: '#fda4af', padding: '8px', borderRadius: '8px', fontSize: '0.76rem', marginBottom: '14px' }}>
+              <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', color: '#be123c', padding: '8px', borderRadius: '8px', fontSize: '0.76rem', marginBottom: '14px' }}>
                 {pinError}
               </div>
             )}
 
             {pinSuccess && (
-              <div style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#6ee7b7', padding: '8px', borderRadius: '8px', fontSize: '0.76rem', marginBottom: '14px' }}>
+              <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857', padding: '8px', borderRadius: '8px', fontSize: '0.76rem', marginBottom: '14px' }}>
                 {pinSuccess}
               </div>
             )}
@@ -840,9 +843,9 @@ export default function ProfileTab({
                 onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
                 placeholder="Enter New 4-Digit PIN"
                 style={{
-                  background: '#070a11',
-                  border: '1px solid #1e293b',
-                  color: '#f8fafc',
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  color: '#0f172a',
                   padding: '12px',
                   borderRadius: '10px',
                   textAlign: 'center',
@@ -859,9 +862,9 @@ export default function ProfileTab({
                 onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
                 placeholder="Confirm 4-Digit PIN"
                 style={{
-                  background: '#070a11',
-                  border: '1px solid #1e293b',
-                  color: '#f8fafc',
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  color: '#0f172a',
                   padding: '12px',
                   borderRadius: '10px',
                   textAlign: 'center',
@@ -877,9 +880,9 @@ export default function ProfileTab({
                   onClick={() => setShowPinModal(false)}
                   style={{
                     flex: 1,
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid #334155',
-                    color: '#cbd5e1',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    color: '#0f172a',
                     padding: '10px',
                     borderRadius: '8px',
                     fontWeight: 600,
@@ -893,14 +896,15 @@ export default function ProfileTab({
                   type="submit"
                   style={{
                     flex: 1,
-                    background: '#10b981',
+                    background: 'linear-gradient(135deg, #059669, #10b981)',
                     border: 'none',
                     color: '#ffffff',
                     padding: '10px',
                     borderRadius: '8px',
                     fontWeight: 700,
                     fontSize: '0.82rem',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
                   }}
                 >
                   Save PIN

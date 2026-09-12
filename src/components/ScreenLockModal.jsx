@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Lock, Unlock, Delete, LogOut, CheckCircle2, AlertCircle, ShieldCheck, KeyRound } from 'lucide-react';
+import ApexLogo from './ApexLogo';
 
 export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogout, indices = null }) {
   const [pin, setPin] = useState('');
@@ -175,12 +176,12 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
         position: 'fixed',
         inset: 0,
         zIndex: 9999999,
-        background: '#070b14',
+        background: '#f8fafc',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        fontFamily: "'Outfit', -apple-system, BlinkMacSystemFont, sans-serif",
         animation: 'fadeIn 0.2s ease-out'
       }}>
         <div style={{
@@ -188,33 +189,33 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
           height: '74px',
           borderRadius: '22px',
           background: status === 'signing_out' 
-            ? 'radial-gradient(circle, rgba(244, 63, 94, 0.25) 0%, rgba(244, 63, 94, 0.05) 100%)'
-            : 'radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.05) 100%)',
+            ? 'radial-gradient(circle, rgba(225, 29, 72, 0.15) 0%, rgba(225, 29, 72, 0.04) 100%)'
+            : 'radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, rgba(16, 185, 129, 0.04) 100%)',
           border: status === 'signing_out'
-            ? '1.5px solid rgba(244, 63, 94, 0.6)'
-            : '1.5px solid rgba(16, 185, 129, 0.6)',
+            ? '1.5px solid rgba(225, 29, 72, 0.4)'
+            : '1.5px solid rgba(16, 185, 129, 0.5)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           boxShadow: status === 'signing_out'
-            ? '0 0 50px rgba(244, 63, 94, 0.4)'
-            : '0 0 50px rgba(16, 185, 129, 0.4)',
+            ? '0 10px 30px rgba(225, 29, 72, 0.2)'
+            : '0 10px 30px rgba(16, 185, 129, 0.25)',
           marginBottom: '24px',
           animation: 'pulse 1.2s infinite ease-in-out'
         }}>
           {status === 'signing_out' ? (
-            <LogOut size={36} color="#f43f5e" />
+            <LogOut size={36} color="#e11d48" />
           ) : status === 'unlocked' ? (
-            <CheckCircle2 size={38} color="#10b981" />
+            <CheckCircle2 size={38} color="#059669" />
           ) : (
-            <Unlock size={36} color="#10b981" />
+            <Unlock size={36} color="#059669" />
           )}
         </div>
 
-        <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#f8fafc', margin: '0 0 8px 0', letterSpacing: '-0.02em' }}>
+        <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0', letterSpacing: '-0.02em' }}>
           {status === 'signing_out' ? 'Signing Out...' : isSetupMode ? 'PIN Configured!' : 'Session Unlocked'}
         </h3>
-        <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0 }}>
+        <p style={{ fontSize: '0.88rem', color: '#64748b', margin: 0 }}>
           {status === 'signing_out' ? 'Resetting security lock and clearing session' : 'Synchronizing active charts, feeds & order history'}
         </p>
       </div>
@@ -228,17 +229,18 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
       position: 'fixed',
       inset: 0,
       zIndex: 999999,
-      background: 'rgba(5, 9, 17, 0.96)',
-      backdropFilter: 'blur(30px)',
-      WebkitBackdropFilter: 'blur(30px)',
+      background: 'rgba(248, 250, 252, 0.98)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '24px',
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+      padding: '20px 16px',
+      fontFamily: "'Outfit', -apple-system, BlinkMacSystemFont, sans-serif",
       animation: 'fadeIn 0.2s ease-out',
-      userSelect: 'none'
+      userSelect: 'none',
+      overflowY: 'auto'
     }}>
       
       {/* Subtle Background Glow */}
@@ -261,24 +263,13 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
         alignItems: 'center',
         textAlign: 'center',
         position: 'relative',
-        zIndex: 10
+        zIndex: 10,
+        margin: 'auto 0'
       }}>
 
         {/* Apex Glowing Brand Emblem */}
-        <div style={{
-          width: '68px',
-          height: '68px',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          border: '1.5px solid rgba(16, 185, 129, 0.6)',
-          boxShadow: '0 10px 35px rgba(16, 185, 129, 0.45)',
-          background: '#070d18',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '20px'
-        }}>
-          <img src="/logo.png" alt="Apex Trading" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+          <ApexLogo size={60} withGlow={true} />
         </div>
 
         {/* Header Title (Setup vs Unlock) */}
@@ -290,9 +281,9 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
               gap: '6px',
               padding: '4px 10px',
               borderRadius: '12px',
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: '#10b981',
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              color: '#047857',
               fontSize: '0.72rem',
               fontWeight: 700,
               marginBottom: '10px'
@@ -300,10 +291,10 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
               <KeyRound size={12} />
               <span>{setupStep === 1 ? 'FIRST-TIME SETUP' : 'STEP 2 OF 2'}</span>
             </div>
-            <h2 style={{ fontSize: '1.55rem', fontWeight: 800, color: '#f8fafc', margin: '0 0 6px 0', letterSpacing: '-0.03em' }}>
+            <h2 style={{ fontSize: '1.55rem', fontWeight: 800, color: '#0f172a', margin: '0 0 6px 0', letterSpacing: '-0.03em' }}>
               {setupStep === 1 ? 'Create Your 4-Digit PIN' : 'Confirm Your 4-Digit PIN'}
             </h2>
-            <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0 0 28px 0', fontWeight: 500 }}>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 28px 0', fontWeight: 500 }}>
               {setupStep === 1 ? 'Choose a 4-digit security PIN for Apex Trading' : 'Re-enter your 4 digits to confirm and unlock'}
             </p>
           </>
@@ -312,7 +303,7 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
             <h2 style={{
               fontSize: '1.65rem',
               fontWeight: 800,
-              color: '#f8fafc',
+              color: '#0f172a',
               margin: '0 0 6px 0',
               letterSpacing: '-0.03em',
               display: 'flex',
@@ -325,7 +316,7 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
 
             <p style={{
               fontSize: '0.86rem',
-              color: '#94a3b8',
+              color: '#64748b',
               margin: '0 0 28px 0',
               fontWeight: 500
             }}>
@@ -350,25 +341,25 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
               <div
                 key={index}
                 style={{
-                  width: '15px',
-                  height: '15px',
+                  width: '16px',
+                  height: '16px',
                   borderRadius: '50%',
                   transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   transform: isFilled ? 'scale(1.25)' : 'scale(1)',
                   background: isError 
-                    ? '#f43f5e' 
+                    ? '#e11d48' 
                     : isFilled 
-                      ? '#10b981' 
-                      : 'transparent',
+                      ? '#059669' 
+                      : '#ffffff',
                   border: isError
-                    ? '2px solid #f43f5e'
+                    ? '2px solid #e11d48'
                     : isFilled
-                      ? '2px solid #10b981'
-                      : '2px solid rgba(148, 163, 184, 0.35)',
+                      ? '2px solid #059669'
+                      : '2px solid #cbd5e1',
                   boxShadow: isFilled
-                    ? '0 0 14px rgba(16, 185, 129, 0.7)'
+                    ? '0 0 14px rgba(16, 185, 129, 0.5)'
                     : isError
-                      ? '0 0 14px rgba(244, 63, 94, 0.7)'
+                      ? '0 0 14px rgba(225, 29, 72, 0.5)'
                       : 'none'
                 }}
               />
@@ -379,7 +370,7 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
         {/* Error Feedback Message */}
         {errorMessage && (
           <div style={{
-            color: '#f43f5e',
+            color: '#e11d48',
             fontSize: '0.78rem',
             fontWeight: 600,
             marginBottom: '16px',
@@ -418,7 +409,7 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#334155'
+                    color: '#94a3b8'
                   }}
                 >
                   <Lock size={18} />
@@ -436,25 +427,26 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
                   style={{
                     height: '62px',
                     borderRadius: '16px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    color: '#94a3b8',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    color: '#64748b',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
-                    transform: isPressed ? 'scale(0.93)' : 'scale(1)'
+                    transform: isPressed ? 'scale(0.93)' : 'scale(1)',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.03)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = '#f8fafc';
-                    e.currentTarget.style.borderColor = '#475569';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
+                    e.currentTarget.style.color = '#0f172a';
+                    e.currentTarget.style.borderColor = '#cbd5e1';
+                    e.currentTarget.style.background = '#f1f5f9';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#94a3b8';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                    e.currentTarget.style.color = '#64748b';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.background = '#f8fafc';
                   }}
                 >
                   <Delete size={20} />
@@ -470,9 +462,9 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
                 style={{
                   height: '62px',
                   borderRadius: '16px',
-                  background: isPressed ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                  border: isPressed ? '1.5px solid #10b981' : '1px solid rgba(255, 255, 255, 0.08)',
-                  color: '#f8fafc',
+                  background: isPressed ? '#ecfdf5' : '#ffffff',
+                  border: isPressed ? '1.5px solid #10b981' : '1px solid #e2e8f0',
+                  color: '#0f172a',
                   fontSize: '1.45rem',
                   fontWeight: 700,
                   display: 'flex',
@@ -481,15 +473,15 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
                   cursor: 'pointer',
                   transition: 'all 0.12s cubic-bezier(0.2, 0.8, 0.4, 1)',
                   transform: isPressed ? 'scale(0.94)' : 'scale(1)',
-                  boxShadow: isPressed ? '0 0 15px rgba(16, 185, 129, 0.3)' : 'none'
+                  boxShadow: isPressed ? '0 0 15px rgba(16, 185, 129, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.03)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.09)';
-                  e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+                  e.currentTarget.style.background = '#f0fdf4';
+                  e.currentTarget.style.borderColor = '#a7f3d0';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.borderColor = '#e2e8f0';
                 }}
               >
                 {keyItem}
@@ -517,7 +509,7 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
           justifyContent: 'space-between',
           width: '280px',
           paddingTop: '12px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+          borderTop: '1px solid #e2e8f0'
         }}>
           <button
             type="button"
@@ -530,15 +522,15 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
             style={{
               background: 'none',
               border: 'none',
-              color: '#38bdf8',
+              color: '#059669',
               cursor: 'pointer',
               padding: 0,
               fontSize: '0.74rem',
               fontWeight: 600,
               transition: 'color 0.15s ease'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#7dd3fc'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#38bdf8'}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#047857'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#059669'}
           >
             {isSetupMode ? 'Cancel' : 'Set / Change PIN'}
           </button>

@@ -79,39 +79,39 @@ export default function TradingChart({
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#090d16' },
-        textColor: '#94a3b8',
+        background: { type: ColorType.Solid, color: '#ffffff' },
+        textColor: '#475569',
         fontSize: 12,
         fontFamily: "'JetBrains Mono', monospace",
       },
       grid: {
-        vertLines: { color: 'rgba(30, 41, 59, 0.4)' },
-        horzLines: { color: 'rgba(30, 41, 59, 0.4)' },
+        vertLines: { color: '#f1f5f9' },
+        horzLines: { color: '#f1f5f9' },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
         vertLine: {
-          color: '#38bdf8',
+          color: '#10b981',
           width: 1,
           style: 3,
-          labelBackgroundColor: '#0284c7',
+          labelBackgroundColor: '#059669',
         },
         horzLine: {
-          color: '#38bdf8',
+          color: '#10b981',
           width: 1,
           style: 3,
-          labelBackgroundColor: '#0284c7',
+          labelBackgroundColor: '#059669',
         },
       },
       rightPriceScale: {
-        borderColor: '#1e293b',
+        borderColor: '#e2e8f0',
         scaleMargins: {
           top: 0.1,
           bottom: 0.25,
         },
       },
       timeScale: {
-        borderColor: '#1e293b',
+        borderColor: '#e2e8f0',
         timeVisible: true,
         secondsVisible: false,
       },
@@ -125,17 +125,17 @@ export default function TradingChart({
     if (chartType === 'candles') {
       const candleSeries = chart.addSeries(CandlestickSeries, {
         upColor: '#10b981',
-        downColor: '#f43f5e',
+        downColor: '#e11d48',
         borderVisible: false,
         wickUpColor: '#10b981',
-        wickDownColor: '#f43f5e',
+        wickDownColor: '#e11d48',
       });
       seriesRef.current = candleSeries;
     } else {
       const lineSeries = chart.addSeries(AreaSeries, {
-        topColor: 'rgba(6, 182, 212, 0.4)',
-        bottomColor: 'rgba(6, 182, 212, 0.0)',
-        lineColor: '#06b6d4',
+        topColor: 'rgba(16, 185, 129, 0.25)',
+        bottomColor: 'rgba(16, 185, 129, 0.0)',
+        lineColor: '#059669',
         lineWidth: 2,
       });
       seriesRef.current = lineSeries;
@@ -143,7 +143,7 @@ export default function TradingChart({
 
     // Add Volume Histogram Series
     const volumeSeries = chart.addSeries(HistogramSeries, {
-      color: '#26a69a',
+      color: 'rgba(16, 185, 129, 0.5)',
       priceFormat: {
         type: 'volume',
       },
@@ -155,9 +155,9 @@ export default function TradingChart({
     });
     volumeSeriesRef.current = volumeSeries;
 
-    // Add EMA 20 (Cyan)
+    // Add EMA 20 (Emerald)
     const ema20 = chart.addSeries(LineSeries, {
-      color: '#06b6d4',
+      color: '#059669',
       lineWidth: 1.5,
       priceLineVisible: false,
       lastValueVisible: false,
@@ -167,7 +167,7 @@ export default function TradingChart({
 
     // Add EMA 50 (Orange Amber)
     const ema50 = chart.addSeries(LineSeries, {
-      color: '#f59e0b',
+      color: '#d97706',
       lineWidth: 1.5,
       priceLineVisible: false,
       lastValueVisible: false,
@@ -194,7 +194,7 @@ export default function TradingChart({
       }
     });
 
-    // Handle Resize
+    // Handle Resize with ResizeObserver & Window fallback
     const handleResize = () => {
       if (chartContainerRef.current && chartInstanceRef.current) {
         chartInstanceRef.current.applyOptions({
@@ -204,11 +204,29 @@ export default function TradingChart({
       }
     };
 
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined' && chartContainerRef.current) {
+      resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect && chartInstanceRef.current) {
+            chartInstanceRef.current.applyOptions({
+              width: Math.floor(entry.contentRect.width),
+              height: Math.floor(entry.contentRect.height),
+            });
+          }
+        }
+      });
+      resizeObserver.observe(chartContainerRef.current);
+    }
+
     window.addEventListener('resize', handleResize);
     handleResize();
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (chartInstanceRef.current) {
         chartInstanceRef.current.remove();
         chartInstanceRef.current = null;
@@ -278,25 +296,40 @@ export default function TradingChart({
   }, [candles, chartType, showEma20, showEma50, showVolume]);
 
   return (
-    <div className="glass-panel" style={{ padding: '16px', display: 'flex', flexDirection: 'column', height: '560px', position: 'relative' }}>
+    <div className="glass-panel" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', minHeight: '440px', height: '540px', position: 'relative', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
       {/* Top Chart Toolbar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-        {/* Timeframe selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255, 255, 255, 0.03)', padding: '3px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px', width: '100%' }}>
+        {/* Timeframe selector (Horizontally swipeable on mobile) */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          background: '#f8fafc',
+          padding: '3px',
+          borderRadius: '8px',
+          border: '1px solid #e2e8f0',
+          overflowX: 'auto',
+          maxWidth: '100%',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none'
+        }}>
           {timeframes.map(tf => (
             <button
               key={tf.label}
               onClick={() => setTimeframe(tf)}
               style={{
-                background: timeframe.label === tf.label ? '#2563eb' : 'transparent',
-                color: timeframe.label === tf.label ? '#fff' : '#94a3b8',
+                background: timeframe.label === tf.label ? '#059669' : 'transparent',
+                color: timeframe.label === tf.label ? '#ffffff' : '#475569',
                 border: 'none',
                 padding: '4px 10px',
                 borderRadius: '6px',
                 fontSize: '0.78rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
-                transition: 'all 0.15s ease'
+                transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                boxShadow: timeframe.label === tf.label ? '0 1px 4px rgba(5, 150, 105, 0.3)' : 'none'
               }}
             >
               {tf.label}
@@ -305,20 +338,21 @@ export default function TradingChart({
         </div>
 
         {/* Chart Style & Indicator Toggles */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
           {/* Candle vs Line */}
-          <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255, 255, 255, 0.03)', padding: '2px', borderRadius: '6px', border: '1px solid #1e293b' }}>
+          <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', padding: '2px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
             <button
               onClick={() => setChartType('candles')}
               style={{
-                background: chartType === 'candles' ? '#1e293b' : 'transparent',
-                color: chartType === 'candles' ? '#38bdf8' : '#64748b',
+                background: chartType === 'candles' ? '#ffffff' : 'transparent',
+                color: chartType === 'candles' ? '#059669' : '#64748b',
                 border: 'none',
                 padding: '4px 8px',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 fontSize: '0.75rem',
-                fontWeight: 600,
-                cursor: 'pointer'
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: chartType === 'candles' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
               }}
             >
               Candles
@@ -326,14 +360,15 @@ export default function TradingChart({
             <button
               onClick={() => setChartType('line')}
               style={{
-                background: chartType === 'line' ? '#1e293b' : 'transparent',
-                color: chartType === 'line' ? '#38bdf8' : '#64748b',
+                background: chartType === 'line' ? '#ffffff' : 'transparent',
+                color: chartType === 'line' ? '#059669' : '#64748b',
                 border: 'none',
                 padding: '4px 8px',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 fontSize: '0.75rem',
-                fontWeight: 600,
-                cursor: 'pointer'
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: chartType === 'line' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
               }}
             >
               Line
@@ -344,13 +379,13 @@ export default function TradingChart({
           <button
             onClick={() => setShowEma20(!showEma20)}
             style={{
-              background: showEma20 ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
-              color: showEma20 ? '#06b6d4' : '#64748b',
-              border: `1px solid ${showEma20 ? 'rgba(6, 182, 212, 0.3)' : '#1e293b'}`,
+              background: showEma20 ? '#ecfdf5' : '#ffffff',
+              color: showEma20 ? '#047857' : '#64748b',
+              border: `1px solid ${showEma20 ? '#a7f3d0' : '#e2e8f0'}`,
               padding: '4px 8px',
               borderRadius: '6px',
               fontSize: '0.75rem',
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: 'pointer'
             }}
           >
@@ -361,13 +396,13 @@ export default function TradingChart({
           <button
             onClick={() => setShowEma50(!showEma50)}
             style={{
-              background: showEma50 ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
-              color: showEma50 ? '#f59e0b' : '#64748b',
-              border: `1px solid ${showEma50 ? 'rgba(245, 158, 11, 0.3)' : '#1e293b'}`,
+              background: showEma50 ? '#fffbeb' : '#ffffff',
+              color: showEma50 ? '#b45309' : '#64748b',
+              border: `1px solid ${showEma50 ? '#fde68a' : '#e2e8f0'}`,
               padding: '4px 8px',
               borderRadius: '6px',
               fontSize: '0.75rem',
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: 'pointer'
             }}
           >
@@ -378,13 +413,13 @@ export default function TradingChart({
           <button
             onClick={() => setShowVolume(!showVolume)}
             style={{
-              background: showVolume ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-              color: showVolume ? '#10b981' : '#64748b',
-              border: `1px solid ${showVolume ? 'rgba(16, 185, 129, 0.3)' : '#1e293b'}`,
+              background: showVolume ? '#ecfdf5' : '#ffffff',
+              color: showVolume ? '#047857' : '#64748b',
+              border: `1px solid ${showVolume ? '#a7f3d0' : '#e2e8f0'}`,
               padding: '4px 8px',
               borderRadius: '6px',
               fontSize: '0.75rem',
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: 'pointer'
             }}
           >
@@ -397,27 +432,30 @@ export default function TradingChart({
       {hoverData && (
         <div style={{ 
           position: 'absolute', 
-          top: '55px', 
-          left: '20px', 
+          top: '52px', 
+          left: '12px', 
           zIndex: 10, 
           display: 'flex', 
-          gap: '12px', 
-          fontSize: '0.75rem', 
-          background: 'rgba(13, 19, 31, 0.85)', 
+          flexWrap: 'wrap',
+          gap: '8px 12px', 
+          maxWidth: 'calc(100% - 24px)',
+          fontSize: '0.72rem', 
+          background: 'rgba(255, 255, 255, 0.95)', 
           padding: '4px 10px', 
-          borderRadius: '6px',
-          border: '1px solid #1e293b',
+          borderRadius: '6px', 
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
           pointerEvents: 'none'
         }}>
           {hoverData.open !== undefined ? (
             <>
-              <span>O: <b className="font-mono" style={{ color: '#f8fafc' }}>₹{hoverData.open}</b></span>
-              <span>H: <b className="font-mono" style={{ color: '#10b981' }}>₹{hoverData.high}</b></span>
-              <span>L: <b className="font-mono" style={{ color: '#f43f5e' }}>₹{hoverData.low}</b></span>
-              <span>C: <b className="font-mono" style={{ color: '#38bdf8' }}>₹{hoverData.close}</b></span>
+              <span style={{ color: '#475569' }}>O: <b className="font-mono" style={{ color: '#0f172a' }}>₹{hoverData.open}</b></span>
+              <span style={{ color: '#475569' }}>H: <b className="font-mono" style={{ color: '#059669' }}>₹{hoverData.high}</b></span>
+              <span style={{ color: '#475569' }}>L: <b className="font-mono" style={{ color: '#e11d48' }}>₹{hoverData.low}</b></span>
+              <span style={{ color: '#475569' }}>C: <b className="font-mono" style={{ color: '#0284c7' }}>₹{hoverData.close}</b></span>
             </>
           ) : (
-            <span>Price: <b className="font-mono" style={{ color: '#38bdf8' }}>₹{hoverData.value}</b></span>
+            <span style={{ color: '#475569' }}>Price: <b className="font-mono" style={{ color: '#059669' }}>₹{hoverData.value}</b></span>
           )}
         </div>
       )}
@@ -425,6 +463,7 @@ export default function TradingChart({
       {/* Chart Canvas */}
       <div 
         ref={chartContainerRef} 
+        className="trading-chart-canvas"
         style={{ flex: 1, width: '100%', minHeight: '420px', position: 'relative' }} 
       />
 
@@ -435,18 +474,18 @@ export default function TradingChart({
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(9, 13, 22, 0.6)',
+          background: 'rgba(255, 255, 255, 0.85)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: '8px',
-          color: '#38bdf8',
+          color: '#059669',
           fontSize: '0.9rem',
           fontWeight: 600,
           zIndex: 20
         }}>
-          <div className="pulse-live" style={{ width: '8px', height: '8px', background: '#38bdf8', borderRadius: '50%' }} />
+          <div className="pulse-live" style={{ width: '8px', height: '8px', background: '#059669', borderRadius: '50%' }} />
           Loading Live Candlesticks...
         </div>
       )}

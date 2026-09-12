@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatPercent } from '../utils/formatters';
 import { getIndianMarketStatus, getUSMarketStatus } from '../utils/marketHours';
+import ApexLogo from './ApexLogo';
 
 export default function MobileMenuDrawer({
   isOpen,
@@ -30,19 +31,27 @@ export default function MobileMenuDrawer({
   onSelectStock,
   portfolio,
   currentUser = null,
-  onOpenAuth
+  onOpenAuth,
+  isAppInstalled = false
 }) {
   if (!isOpen) return null;
 
+  const isInstalled = isAppInstalled || (typeof window !== 'undefined' && (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator?.standalone === true ||
+    localStorage.getItem('apex_pwa_installed') === 'true'
+  ));
+
   const navItems = [
-    { id: 'terminal', label: 'Terminal', desc: 'Live charts, real-time depth & trading', icon: BarChart3, color: '#10b981' },
-    { id: 'dashboard', label: 'Dashboard', desc: 'Overview, market stats & allocations', icon: LayoutDashboard, color: '#38bdf8' },
-    { id: 'orders', label: 'Orders', desc: 'Order book, executions & pending orders', icon: ListOrdered, color: '#a855f7' },
-    { id: 'holdings', label: 'Holdings', desc: 'Delivery equity & long-term Demat portfolio', icon: Briefcase, color: '#f59e0b' },
-    { id: 'positions', label: 'Positions', desc: 'Active intraday MIS positions & P&L', icon: Layers, color: '#ec4899' },
-    { id: 'funds', label: 'Funds & Capital', desc: 'Manage margin, deposit or reset capital', icon: CreditCard, color: '#06b6d4' },
-    { id: 'journal', label: 'Trading Journal', desc: 'Performance review, notes & trade psychology', icon: BookOpen, color: '#6366f1' },
-    { id: 'learn', label: 'Learn Academy', desc: 'Trading lessons, strategies & definitions', icon: GraduationCap, color: '#14b8a6' }
+    { id: 'terminal', label: 'Terminal', desc: 'Live charts, real-time depth & trading', icon: BarChart3, color: '#059669' },
+    { id: 'option-chain', label: 'Option Chain (F&O)', desc: 'Live NIFTY strikes, Greeks & open interest', icon: Layers, color: '#10b981' },
+    { id: 'dashboard', label: 'Dashboard', desc: 'Overview, market stats & allocations', icon: LayoutDashboard, color: '#0284c7' },
+    { id: 'orders', label: 'Orders', desc: 'Order book, executions & pending orders', icon: ListOrdered, color: '#7c3aed' },
+    { id: 'holdings', label: 'Holdings', desc: 'Delivery equity & long-term Demat portfolio', icon: Briefcase, color: '#d97706' },
+    { id: 'positions', label: 'Positions', desc: 'Active intraday MIS positions & P&L', icon: Layers, color: '#db2777' },
+    { id: 'funds', label: 'Funds & Capital', desc: 'Manage margin, deposit or reset capital', icon: CreditCard, color: '#0891b2' },
+    { id: 'journal', label: 'Trading Journal', desc: 'Performance review, notes & trade psychology', icon: BookOpen, color: '#4f46e5' },
+    { id: 'learn', label: 'Learn Academy', desc: 'Trading lessons, strategies & definitions', icon: GraduationCap, color: '#0d9488' }
   ];
 
   const handleNav = (id) => {
@@ -62,8 +71,8 @@ export default function MobileMenuDrawer({
         className="mobile-drawer"
         style={{
           width: 'min(86vw, 360px)',
-          background: '#0a0f18',
-          borderRight: '1px solid #1f2a3d',
+          background: '#ffffff',
+          borderRight: '1px solid #e2e8f0',
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
@@ -72,13 +81,11 @@ export default function MobileMenuDrawer({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ padding: '16px 18px', borderBottom: '1px solid #1c2738', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0d131f' }}>
+        <div style={{ padding: '16px 18px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(16, 185, 129, 0.5)' }}>
-              <img src="/logo.png" alt="Apex Trading" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-            <span style={{ fontWeight: 900, fontSize: '1.05rem', color: '#fff' }}>
-              APEX<span style={{ color: '#10b981', marginLeft: '3px' }}>TRADING</span>
+            <ApexLogo size={32} withGlow={false} />
+            <span style={{ fontWeight: 900, fontSize: '1.05rem', color: '#0f172a' }}>
+              APEX<span style={{ color: '#059669', marginLeft: '3px' }}>TRADING</span>
             </span>
 
             {/* Dynamic Market Status Badge */}
@@ -97,7 +104,7 @@ export default function MobileMenuDrawer({
                   alignItems: 'center',
                   gap: '4px'
                 }}>
-                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: market.isOpen ? '#10b981' : '#94a3b8' }} />
+                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: market.isOpen ? '#059669' : '#94a3b8' }} />
                   {market.label}
                 </span>
               );
@@ -106,26 +113,26 @@ export default function MobileMenuDrawer({
 
           <button 
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+            style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
           >
             <X size={20} />
           </button>
         </div>
 
         {/* User Account / Google Login Banner */}
-        <div style={{ padding: '12px 14px', borderBottom: '1px solid #162030', background: 'rgba(255,255,255,0.02)' }}>
+        <div style={{ padding: '12px 14px', borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
           {currentUser ? (
             <div 
               onClick={() => { onOpenAuth(); onClose(); }}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #10b981' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #059669' }}>
                   <img src={currentUser.picture} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff' }}>{currentUser.name}</div>
-                  <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>{currentUser.email}</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>{currentUser.name}</div>
+                  <div style={{ fontSize: '0.68rem', color: '#64748b' }}>{currentUser.email}</div>
                 </div>
               </div>
               <ChevronRight size={16} color="#64748b" />
@@ -135,9 +142,9 @@ export default function MobileMenuDrawer({
               onClick={() => { onOpenAuth(); onClose(); }}
               style={{
                 width: '100%',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid #233047',
-                color: '#fff',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                color: '#0f172a',
                 padding: '9px 12px',
                 borderRadius: '8px',
                 fontWeight: 700,
@@ -160,14 +167,14 @@ export default function MobileMenuDrawer({
           )}
         </div>
 
-        {/* Quick Actions (Search, Tips, Install) */}
-        <div style={{ padding: '12px 14px', borderBottom: '1px solid #162030', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+        {/* Quick Actions (Search, Tips) */}
+        <div style={{ padding: '12px 14px', borderBottom: '1px solid #e2e8f0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           <button
             onClick={() => { onOpenSearch(); onClose(); }}
             style={{
-              background: '#131c2c',
-              border: '1px solid #223046',
-              color: '#38bdf8',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              color: '#059669',
               borderRadius: '8px',
               padding: '8px 10px',
               fontSize: '0.78rem',
@@ -185,9 +192,9 @@ export default function MobileMenuDrawer({
           <button
             onClick={() => { onOpenTips(); onClose(); }}
             style={{
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
-              color: '#f59e0b',
+              background: '#fef3c7',
+              border: '1px solid #fde68a',
+              color: '#d97706',
               borderRadius: '8px',
               padding: '8px 10px',
               fontSize: '0.78rem',
@@ -204,7 +211,7 @@ export default function MobileMenuDrawer({
         </div>
 
         {/* Major Benchmarks Strip */}
-        <div style={{ padding: '12px 14px', borderBottom: '1px solid #162030' }}>
+        <div style={{ padding: '12px 14px', borderBottom: '1px solid #e2e8f0' }}>
           <div style={{ fontSize: '0.66rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>
             Live Benchmarks
           </div>
@@ -214,17 +221,17 @@ export default function MobileMenuDrawer({
                 key={idx.symbol}
                 onClick={() => handlePickIndex(idx.symbol)}
                 style={{
-                  background: '#111724',
-                  border: '1px solid #1c2638',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
                   borderRadius: '6px',
                   padding: '6px 8px',
                   cursor: 'pointer'
                 }}
               >
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#334155', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {idx.name}
                 </div>
-                <div className="font-mono" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#fff', marginTop: '2px' }}>
+                <div className="font-mono" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>
                   {formatCurrency(idx.price, idx.currency)}
                 </div>
                 <div className={`font-mono ${idx.change >= 0 ? 'profit-text' : 'loss-text'}`} style={{ fontSize: '0.64rem', fontWeight: 600 }}>
@@ -252,17 +259,17 @@ export default function MobileMenuDrawer({
                   justifyContent: 'space-between',
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  background: isActive ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
-                  border: `1px solid ${isActive ? 'rgba(16, 185, 129, 0.4)' : 'transparent'}`,
+                  background: isActive ? '#ecfdf5' : 'transparent',
+                  border: `1px solid ${isActive ? '#a7f3d0' : 'transparent'}`,
                   cursor: 'pointer'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ color: isActive ? '#10b981' : color }}>
+                  <div style={{ color: isActive ? '#059669' : color }}>
                     <Icon size={18} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: isActive ? '#10b981' : '#f1f5f9' }}>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: isActive ? '#059669' : '#0f172a' }}>
                       {label}
                     </div>
                     <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
@@ -270,39 +277,42 @@ export default function MobileMenuDrawer({
                     </div>
                   </div>
                 </div>
-                <ChevronRight size={14} color="#64748b" />
+                <ChevronRight size={14} color="#94a3b8" />
               </div>
             );
           })}
         </div>
 
         {/* Footer: PWA Install & Margin */}
-        <div style={{ padding: '14px', borderTop: '1px solid #1c2738', background: '#0d131f' }}>
-          <button
-            onClick={() => { onInstallPWA(); onClose(); }}
-            style={{
-              width: '100%',
-              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2))',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              color: '#10b981',
-              padding: '9px',
-              borderRadius: '8px',
-              fontWeight: 700,
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              marginBottom: '10px'
-            }}
-          >
-            <Smartphone size={15} />
-            <span>Install Apex Trading App</span>
-          </button>
+        <div style={{ padding: '14px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+          {!isInstalled && (
+            <button
+              onClick={() => { onInstallPWA(); onClose(); }}
+              style={{
+                width: '100%',
+                background: 'linear-gradient(135deg, #059669, #10b981)',
+                border: 'none',
+                color: '#ffffff',
+                padding: '9px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                marginBottom: '10px',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+              }}
+            >
+              <Smartphone size={15} />
+              <span>Install Apex Trading App</span>
+            </button>
+          )}
 
           <div style={{ fontSize: '0.72rem', color: '#64748b', textAlign: 'center' }}>
-            Margin: <b className="font-mono" style={{ color: '#10b981' }}>₹{(portfolio?.cashBalance || 0).toLocaleString('en-IN')}</b>
+            Margin: <b className="font-mono" style={{ color: '#059669' }}>₹{(portfolio?.cashBalance || 0).toLocaleString('en-IN')}</b>
           </div>
         </div>
       </div>

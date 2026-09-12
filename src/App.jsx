@@ -24,6 +24,8 @@ import GoogleAuthModal from './components/GoogleAuthModal';
 import LoginPage from './components/LoginPage';
 import ScreenLockModal from './components/ScreenLockModal';
 import ProfileTab from './components/ProfileTab';
+import OptionChain from './components/OptionChain';
+import ApexLogo from './components/ApexLogo';
 import { isAnyMarketOpen, shouldPollSymbol } from './utils/marketHours';
 
 // Safe fetch helper that resists non-JSON / error responses
@@ -41,19 +43,54 @@ const safeFetchJson = async (url, options = {}) => {
   }
 };
 
-// Responsive hook: true when viewport is mobile/tablet width
-function useIsMobile(breakpoint = 900) {
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= breakpoint);
+// Responsive viewport hook: provides width, height, and vertical/mobile screen detection
+function useViewport() {
+  const [viewport, setViewport] = useState(() => {
+    if (typeof window === 'undefined') {
+      return { width: 1200, height: 800, isVertical: false, isMobile: false, isTablet: false, isCompact: false };
+    }
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const isVertical = h > w || w <= 1024;
+    return {
+      width: w,
+      height: h,
+      isVertical,
+      isMobile: w < 768,
+      isTablet: w >= 768 && w <= 1024,
+      isCompact: w < 1180,
+    };
+  });
+
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    const onResize = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const isVertical = h > w || w <= 1024;
+      setViewport({
+        width: w,
+        height: h,
+        isVertical,
+        isMobile: w < 768,
+        isTablet: w >= 768 && w <= 1024,
+        isCompact: w < 1180,
+      });
+    };
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [breakpoint]);
-  return isMobile;
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, []);
+
+  return viewport;
 }
 
 export default function App() {
-  const [activeSymbol, setActiveSymbol] = useState(null);
+  const [activeSymbol, setActiveSymbol] = useState(() => {
+    return localStorage.getItem('ax_active_symbol') || '^NSEI';
+  });
   const [currentQuote, setCurrentQuote] = useState(null);
   const [indices, setIndices] = useState([]);
   const [timeframe, setTimeframe] = useState({ label: '5m', range: '5d', interval: '5m', title: '5 Minutes' });
@@ -64,24 +101,30 @@ export default function App() {
   // Active Navigation Tab: 'terminal' | 'dashboard' | 'orders' | 'holdings' | 'positions' | 'funds' | 'journal' | 'learn'
   const [activeTab, setActiveTab] = useState('terminal');
 
-  // Responsive + mobile drawers
-  const isMobile = useIsMobile();
+  // Responsive breakpoints
+  const { width: viewportWidth, isMobile, isTablet, isCompact, isVertical } = useViewport();
   const [showMobileWatchlist, setShowMobileWatchlist] = useState(false);
 
   // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isPwaInstalled, setIsPwaInstalled] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator?.standalone === true;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator?.standalone === true;
+    const isStored = localStorage.getItem('apex_pwa_installed') === 'true';
+    return isStandalone || isStored;
   });
 
   useEffect(() => {
     const handleBeforeInstall = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      // App is offered to install, meaning it was uninstalled or not yet installed
+      localStorage.removeItem('apex_pwa_installed');
+      setIsPwaInstalled(false);
     };
 
     const handleAppInstalled = () => {
+      localStorage.setItem('apex_pwa_installed', 'true');
       setIsPwaInstalled(true);
       setDeferredPrompt(null);
     };
@@ -100,10 +143,13 @@ export default function App() {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
+        localStorage.setItem('apex_pwa_installed', 'true');
         setIsPwaInstalled(true);
       }
       setDeferredPrompt(null);
     } else {
+      localStorage.setItem('apex_pwa_installed', 'true');
+      setIsPwaInstalled(true);
       alert('To install Apex Trading:\n\nChrome/Edge: Click the install icon in your address bar.\niOS Safari: Tap Share -> "Add to Home Screen".\nAndroid: Tap browser menu -> "Install App".');
     }
   }, [deferredPrompt]);
@@ -146,11 +192,26 @@ export default function App() {
       .catch(() => {});
   }, []);
 
+  // -------------------------------------------------------------
+  // PIN SECURITY ARCHITECTURE:
+  // 1. Must be asked while logging in every time & on new sessions
+  // 2. Must NOT be asked while using the active session (any duration)
+  // 3. If running in the background for >= 25 seconds -> Lock immediately
+  // -------------------------------------------------------------
+  const [isScreenLocked, setIsScreenLocked] = useState(() => {
+    // If not unlocked in this specific browser session, require PIN
+    return sessionStorage.getItem('ax_session_unlocked') !== 'true';
+  });
+
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
     try {
       localStorage.setItem('ax_current_user', JSON.stringify(user));
     } catch {}
+    // Require PIN every time user logs into the app
+    sessionStorage.removeItem('ax_session_unlocked');
+    sessionStorage.setItem('ax_screen_locked', 'true');
+    setIsScreenLocked(true);
   };
 
   const handleLogout = async () => {
@@ -160,27 +221,98 @@ export default function App() {
     localStorage.removeItem('ax_current_user');
     localStorage.removeItem('ax_auth_token');
     sessionStorage.removeItem('ax_screen_locked');
+    sessionStorage.removeItem('ax_session_unlocked');
+    sessionStorage.removeItem('ax_bg_timestamp');
     setCurrentUser(null);
     setIsAuthOpen(false);
     setIsScreenLocked(false);
   };
 
-  // Terminal Screen Lock State
-  const [isScreenLocked, setIsScreenLocked] = useState(() => {
-    return sessionStorage.getItem('ax_screen_locked') === 'true';
-  });
-
   const handleLockScreen = useCallback(() => {
     setIsScreenLocked(true);
+    sessionStorage.removeItem('ax_session_unlocked');
     sessionStorage.setItem('ax_screen_locked', 'true');
   }, []);
 
   const handleUnlockScreen = useCallback(() => {
     setIsScreenLocked(false);
     sessionStorage.removeItem('ax_screen_locked');
+    sessionStorage.setItem('ax_session_unlocked', 'true');
+    sessionStorage.removeItem('ax_bg_timestamp');
   }, []);
 
-  // Keyboard shortcut: Ctrl+L or Cmd+L to quickly lock/unlock terminal
+  // 25-Second Background Inactivity Guard
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let bgTimer = null;
+    const BACKGROUND_LOCK_DELAY_MS = 25000; // 25 seconds
+
+    const handleEnterBackground = () => {
+      // Record when the app was sent to the background (tab hidden or window blurred/minimized)
+      const now = Date.now();
+      sessionStorage.setItem('ax_bg_timestamp', now.toString());
+
+      if (bgTimer) clearTimeout(bgTimer);
+      bgTimer = setTimeout(() => {
+        // App kept in background for 25 seconds -> trigger PIN screen lock
+        sessionStorage.removeItem('ax_session_unlocked');
+        sessionStorage.setItem('ax_screen_locked', 'true');
+        setIsScreenLocked(true);
+      }, BACKGROUND_LOCK_DELAY_MS);
+    };
+
+    const handleReturnForeground = () => {
+      // Check if 25 seconds elapsed while in background
+      const bgTimeStr = sessionStorage.getItem('ax_bg_timestamp');
+      if (bgTimeStr) {
+        const elapsed = Date.now() - parseInt(bgTimeStr, 10);
+        if (elapsed >= BACKGROUND_LOCK_DELAY_MS) {
+          sessionStorage.removeItem('ax_session_unlocked');
+          sessionStorage.setItem('ax_screen_locked', 'true');
+          setIsScreenLocked(true);
+        }
+        sessionStorage.removeItem('ax_bg_timestamp');
+      }
+
+      if (bgTimer) {
+        clearTimeout(bgTimer);
+        bgTimer = null;
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        handleEnterBackground();
+      } else {
+        handleReturnForeground();
+      }
+    };
+
+    const onWindowBlur = () => {
+      // If window lost focus and document is not focused, trigger background timer
+      if (!document.hasFocus()) {
+        handleEnterBackground();
+      }
+    };
+
+    const onWindowFocus = () => {
+      handleReturnForeground();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('blur', onWindowBlur);
+    window.addEventListener('focus', onWindowFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('blur', onWindowBlur);
+      window.removeEventListener('focus', onWindowFocus);
+      if (bgTimer) clearTimeout(bgTimer);
+    };
+  }, [currentUser]);
+
+  // Keyboard shortcut: Ctrl+L or Cmd+L to quickly lock terminal
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'l' || e.key === 'L')) {
@@ -189,8 +321,10 @@ export default function App() {
           setIsScreenLocked(prev => {
             const next = !prev;
             if (next) {
+              sessionStorage.removeItem('ax_session_unlocked');
               sessionStorage.setItem('ax_screen_locked', 'true');
             } else {
+              sessionStorage.setItem('ax_session_unlocked', 'true');
               sessionStorage.removeItem('ax_screen_locked');
             }
             return next;
@@ -207,6 +341,27 @@ export default function App() {
     quote: null,
     action: 'BUY'
   });
+
+  // Terminal Subview: 'chart' | 'chain'
+  const [terminalViewMode, setTerminalViewMode] = useState('chart');
+
+  const handleSelectOptionTrade = useCallback((contract, action = 'BUY') => {
+    setOrderModalConfig({
+      isOpen: true,
+      quote: {
+        symbol: contract.symbol,
+        name: contract.name,
+        shortName: contract.shortName,
+        price: contract.price,
+        lotSize: contract.lotSize,
+        exchange: contract.exchange || 'NSE',
+        type: 'OPTION',
+        isOption: true,
+        currency: 'INR'
+      },
+      action: action
+    });
+  }, []);
 
   // Fetch Live Indices
   const fetchIndices = useCallback(() => {
@@ -271,10 +426,10 @@ export default function App() {
   useEffect(() => {
     fetchIndices();
     fetchPortfolio();
-    if (activeSymbol) {
-      fetchQuote(activeSymbol);
-      fetchCandles(activeSymbol, timeframe);
-    }
+    const symbolToLoad = activeSymbol || localStorage.getItem('ax_active_symbol') || '^NSEI';
+    if (!activeSymbol) setActiveSymbol(symbolToLoad);
+    fetchQuote(symbolToLoad);
+    fetchCandles(symbolToLoad, timeframe);
 
     const intervalId = setInterval(() => {
       // RULE 1: Never poll if tab is backgrounded / minimized
@@ -332,8 +487,12 @@ export default function App() {
   // Handle Select Stock
   const handleSelectStock = (symbol) => {
     setActiveSymbol(symbol);
+    try {
+      localStorage.setItem('ax_active_symbol', symbol);
+    } catch {}
     fetchQuote(symbol);
     fetchCandles(symbol, timeframe);
+    setActiveTab('terminal');
   };
 
   // Open Order Modal
@@ -449,8 +608,22 @@ export default function App() {
     );
   }
 
+  // MANDATORY ZERO-LATENCY PIN GATE:
+  // Without PIN, the home page and terminal MUST NOT be shown (0ms latency, zero rendering)
+  if (isScreenLocked) {
+    return (
+      <ScreenLockModal
+        isOpen={true}
+        onUnlock={handleUnlockScreen}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        indices={indices}
+      />
+    );
+  }
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#090d16' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
       
       {/* Apex Trading Top Navigation */}
       <KiteNavbar
@@ -473,12 +646,17 @@ export default function App() {
         isAppInstalled={isPwaInstalled}
       />
 
-      {/* Main Body with 2-Column Split Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '320px 1fr', flex: 1, minHeight: isMobile ? 'auto' : 'calc(100vh - 62px)' }}>
+      {/* Main Body with Responsive Adaptive Split Layout */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: (isMobile || isTablet) ? '1fr' : '300px 1fr',
+        flex: 1,
+        minHeight: isMobile ? 'auto' : 'calc(100vh - 62px)'
+      }}>
 
-        {/* Left Column: Marketwatch (desktop sidebar) */}
-        {!isMobile && (
-          <aside>
+        {/* Left Column: Marketwatch (Desktop sidebar on screens >= 1024px) */}
+        {!(isMobile || isTablet) && (
+          <aside style={{ borderRight: '1px solid #e2e8f0', background: '#ffffff', height: 'calc(100vh - 56px)', position: 'sticky', top: '56px', overflowY: 'auto' }}>
             <KiteMarketwatch
               watchlists={portfolio?.watchlists}
               activeSymbol={activeSymbol}
@@ -493,8 +671,8 @@ export default function App() {
           </aside>
         )}
 
-        {/* Mobile Watchlist Slide-over Drawer */}
-        {isMobile && showMobileWatchlist && (
+        {/* Mobile & Tablet Watchlist Slide-over Drawer */}
+        {(isMobile || isTablet) && showMobileWatchlist && (
           <div className="mobile-drawer-overlay" onClick={() => setShowMobileWatchlist(false)}>
             <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
               <KiteMarketwatch
@@ -514,39 +692,35 @@ export default function App() {
         )}
 
         {/* Right Column: Dynamic View Container */}
-        <main style={{ padding: isMobile ? '14px 12px 90px 12px' : '20px 24px', overflowY: 'auto' }}>
+        <main style={{
+          padding: isVertical ? '12px 12px 88px 12px' : '20px 24px',
+          overflowY: 'auto',
+          minWidth: 0
+        }}>
           
           {/* TAB 1: TRADING TERMINAL */}
           {activeTab === 'terminal' && (
-            !activeSymbol || !currentQuote ? (
+            !activeSymbol ? (
               <div className="glass-panel" style={{ padding: '60px 24px', textAlign: 'center', maxWidth: '750px', margin: '40px auto' }}>
-                <div style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '16px',
-                  margin: '0 auto 16px auto',
-                  overflow: 'hidden',
-                  boxShadow: '0 0 24px rgba(16, 185, 129, 0.4)',
-                  border: '1px solid rgba(16, 185, 129, 0.5)'
-                }}>
-                  <img src="/logo.png" alt="Apex Trading" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                  <ApexLogo size={72} withGlow={true} />
                 </div>
-                <h2 style={{ fontSize: '1.55rem', fontWeight: 800, color: '#fff', marginBottom: '8px', letterSpacing: '-0.02em' }}>
+                <h2 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px', letterSpacing: '-0.02em' }}>
                   Apex Trading Terminal
                 </h2>
-                <p style={{ fontSize: '0.88rem', color: '#94a3b8', maxWidth: '500px', margin: '0 auto 24px auto', lineHeight: 1.5 }}>
+                <p style={{ fontSize: '0.92rem', color: '#475569', maxWidth: '520px', margin: '0 auto 24px auto', lineHeight: 1.6 }}>
                   Everything starts clean and fresh with 100% real live market data. No preloaded stocks. Search and add any stock or index to get started.
                 </p>
 
                 <button
                   onClick={() => setIsSearchOpen(true)}
                   className="btn-primary"
-                  style={{ padding: '12px 24px', fontSize: '0.95rem', margin: '0 auto 28px auto', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                  style={{ padding: '12px 26px', fontSize: '0.95rem', margin: '0 auto 28px auto', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                 >
                   <Search size={18} /> Search Any Stock or Index (Ctrl+K)
                 </button>
 
-                <div style={{ borderTop: '1px solid #1e293b', paddingTop: '20px' }}>
+                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
                   <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '10px' }}>
                     Or select a benchmark to load:
                   </div>
@@ -564,23 +738,26 @@ export default function App() {
                         key={p.symbol}
                         onClick={() => handleSelectStock(p.symbol)}
                         style={{
-                          background: 'rgba(255, 255, 255, 0.04)',
-                          color: '#cbd5e1',
-                          border: '1px solid #1e293b',
-                          borderRadius: '6px',
-                          padding: '6px 12px',
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
+                          background: '#ffffff',
+                          color: '#334155',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          padding: '7px 14px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
                           cursor: 'pointer',
-                          transition: 'all 0.15s ease'
+                          transition: 'all 0.15s ease',
+                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.borderColor = '#10b981';
-                          e.currentTarget.style.color = '#fff';
+                          e.currentTarget.style.color = '#047857';
+                          e.currentTarget.style.background = '#ecfdf5';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = '#1e293b';
-                          e.currentTarget.style.color = '#cbd5e1';
+                          e.currentTarget.style.borderColor = '#e2e8f0';
+                          e.currentTarget.style.color = '#334155';
+                          e.currentTarget.style.background = '#ffffff';
                         }}
                       >
                         {p.label}
@@ -588,6 +765,16 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+              </div>
+            ) : !currentQuote ? (
+              <div className="glass-panel" style={{ padding: '80px 24px', textAlign: 'center', maxWidth: '750px', margin: '40px auto' }}>
+                <div className="pulse-live" style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#059669', margin: '0 auto 16px auto' }} />
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
+                  Loading Live Exchange Data for {activeSymbol}...
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                  Connecting to real-time market gateway. Chart and order ticket will appear momentarily.
+                </p>
               </div>
             ) : (
               <div>
@@ -607,42 +794,106 @@ export default function App() {
 
                 {/* Beginner Mode: plain-language tip strip */}
                 {beginnerMode && (
-                  <div className="glass-panel" style={{ padding: '12px 16px', marginBottom: '14px', background: 'rgba(245, 158, 11, 0.06)', borderColor: 'rgba(245, 158, 11, 0.3)', fontSize: '0.82rem', color: '#fcd34d', lineHeight: 1.5 }}>
+                  <div className="glass-panel" style={{ padding: '12px 16px', marginBottom: '14px', background: '#fffbeb', borderColor: '#fde68a', fontSize: '0.82rem', color: '#b45309', lineHeight: 1.5 }}>
                     <b>Beginner tip:</b> CNC means you buy shares for delivery (truly yours, hold for years, zero brokerage).
                     MIS is intraday leverage that must be squared off today — riskier. Start with small CNC buys on
                     large caps. Set a Stop Loss (SL) order so you exit automatically if the trade goes wrong.
                   </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: '16px', alignItems: 'start' }}>
-                  {/* Center: Chart & Market Depth */}
-                  <div>
-                    <TradingChart
-                      symbol={activeSymbol}
-                      timeframe={timeframe}
-                      setTimeframe={setTimeframe}
-                      candles={candles}
-                      loading={loadingChart}
-                      currentPrice={currentQuote?.price}
-                      currency={currentQuote?.currency || 'INR'}
-                    />
-                    <MarketDepth quote={currentQuote} onSelectStock={handleSelectStock} />
-                  </div>
-
-                  {/* Right: Quick Order Ticket Panel */}
-                  <div style={{ minHeight: isMobile ? 'auto' : '560px' }}>
-                    <OrderTicket
-                      quote={currentQuote}
-                      portfolio={portfolio}
-                      beginnerMode={beginnerMode}
-                      onOrderPlaced={(res) => {
-                        if (res.portfolio) setPortfolio(res.portfolio);
+                {/* Terminal Subview Mode Selector: Candlestick Chart vs Option Chain */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '2px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setTerminalViewMode('chart')}
+                      style={{
+                        background: terminalViewMode === 'chart' ? '#ffffff' : 'transparent',
+                        color: terminalViewMode === 'chart' ? '#059669' : '#64748b',
+                        border: 'none',
+                        padding: '5px 14px',
+                        borderRadius: '6px',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: terminalViewMode === 'chart' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                        transition: 'all 0.15s ease'
                       }}
-                    />
+                    >
+                      Candlestick Chart
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTerminalViewMode('chain')}
+                      style={{
+                        background: terminalViewMode === 'chain' ? '#ffffff' : 'transparent',
+                        color: terminalViewMode === 'chain' ? '#059669' : '#64748b',
+                        border: 'none',
+                        padding: '5px 14px',
+                        borderRadius: '6px',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: terminalViewMode === 'chain' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      Option Chain (F&O)
+                    </button>
                   </div>
                 </div>
+
+                {terminalViewMode === 'chain' ? (
+                  <OptionChain
+                    indices={indices}
+                    onSelectOptionTrade={handleSelectOptionTrade}
+                    onBackToTerminal={() => setTerminalViewMode('chart')}
+                  />
+                ) : (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isCompact ? '1fr' : '1fr 340px',
+                    gap: '16px',
+                    alignItems: 'start'
+                  }}>
+                    {/* Center: Chart & Market Depth */}
+                    <div style={{ minWidth: 0, width: '100%' }}>
+                      <TradingChart
+                        symbol={activeSymbol}
+                        timeframe={timeframe}
+                        setTimeframe={setTimeframe}
+                        candles={candles}
+                        loading={loadingChart}
+                        currentPrice={currentQuote?.price}
+                        currency={currentQuote?.currency || 'INR'}
+                      />
+                      <MarketDepth quote={currentQuote} onSelectStock={handleSelectStock} />
+                    </div>
+
+                    {/* Right: Quick Order Ticket Panel */}
+                    <div style={{ minHeight: isCompact ? 'auto' : '560px', width: '100%' }}>
+                      <OrderTicket
+                        quote={currentQuote}
+                        portfolio={portfolio}
+                        beginnerMode={beginnerMode}
+                        onOrderPlaced={(res) => {
+                          if (res.portfolio) setPortfolio(res.portfolio);
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )
+          )}
+
+          {/* TAB: DEDICATED OPTION CHAIN */}
+          {activeTab === 'option-chain' && (
+            <OptionChain
+              indices={indices}
+              onSelectOptionTrade={handleSelectOptionTrade}
+              onBackToTerminal={() => setActiveTab('terminal')}
+            />
           )}
 
           {/* TAB 2: DASHBOARD */}
@@ -658,7 +909,7 @@ export default function App() {
 
           {/* TAB 3: ORDERS */}
           {activeTab === 'orders' && (
-            <OrdersTab orders={portfolio?.orders} />
+            <OrdersTab orders={portfolio?.orders} onRefreshPortfolio={fetchPortfolio} />
           )}
 
           {/* TAB 4: HOLDINGS */}
@@ -714,13 +965,13 @@ export default function App() {
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      {isMobile && (
+      {/* Bottom Navigation for Mobile and All Vertical/Portrait Screens */}
+      {isVertical && (
         <MobileNav
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onOpenWatchlist={() => setShowMobileWatchlist(true)}
-          onOpenSearch={() => setIsSearchOpen(true)}
+          onOpenMenu={() => setIsMobileMenuOpen(true)}
         />
       )}
 
@@ -785,15 +1036,6 @@ export default function App() {
         currentUser={currentUser}
         onLoginSuccess={handleLoginSuccess}
         onLogout={handleLogout}
-      />
-
-      {/* Screen Lock Privacy Modal */}
-      <ScreenLockModal
-        isOpen={isScreenLocked}
-        onUnlock={handleUnlockScreen}
-        currentUser={currentUser}
-        onLogout={handleLogout}
-        indices={indices}
       />
     </div>
   );

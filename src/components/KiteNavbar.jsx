@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatPercent, isIndianMarketOpen } from '../utils/formatters';
 import { getIndianMarketStatus, getUSMarketStatus } from '../utils/marketHours';
+import ApexLogo from './ApexLogo';
 
 export default function KiteNavbar({ 
   portfolio = null, 
@@ -41,7 +42,12 @@ export default function KiteNavbar({
 }) {
   const isMarketOpen = isIndianMarketOpen();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [isInstalled, setIsInstalled] = useState(isAppInstalled);
+
+  const isInstalled = isAppInstalled || (typeof window !== 'undefined' && (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator?.standalone === true ||
+    localStorage.getItem('apex_pwa_installed') === 'true'
+  ));
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
@@ -51,24 +57,25 @@ export default function KiteNavbar({
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-    }
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 
   const handleInstallClick = async () => {
+    if (onInstallApp) {
+      onInstallApp();
+      return;
+    }
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
-        setIsInstalled(true);
+        localStorage.setItem('apex_pwa_installed', 'true');
       }
       setDeferredPrompt(null);
     } else {
+      localStorage.setItem('apex_pwa_installed', 'true');
       alert('To install Apex Trading on your device:\n\nTap the install icon in your address bar or browser menu -> "Install App" / "Add to Home Screen".');
     }
   };
@@ -104,8 +111,9 @@ export default function KiteNavbar({
 
   return (
     <header style={{ 
-      background: '#0d131f', 
-      borderBottom: '1px solid #1f2a3d', 
+      background: '#ffffff', 
+      borderBottom: '1px solid #e2e8f0', 
+      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
       position: 'sticky', 
       top: 0, 
       zIndex: 100,
@@ -128,28 +136,11 @@ export default function KiteNavbar({
             onClick={() => setActiveTab('terminal')}
             title="Apex Trading Terminal"
           >
-            <div style={{ 
-              width: '32px', 
-              height: '32px', 
-              borderRadius: '8px', 
-              overflow: 'hidden',
-              boxShadow: '0 0 12px rgba(16, 185, 129, 0.4)',
-              border: '1px solid rgba(16, 185, 129, 0.45)',
-              background: '#060911',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <img 
-                src="/logo.png" 
-                alt="Apex Trading Logo" 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-              />
-            </div>
+            {/* Logo Emblem */}
+            <ApexLogo size={32} withGlow={false} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ fontWeight: 900, fontSize: '1.05rem', color: '#fff', letterSpacing: '-0.03em', whiteSpace: 'nowrap' }}>
-                APEX<span style={{ color: '#10b981', fontSize: '0.82rem', fontWeight: 800, marginLeft: '3px' }}>TRADING</span>
+              <span style={{ fontWeight: 900, fontSize: '1.05rem', color: '#0f172a', letterSpacing: '-0.03em', whiteSpace: 'nowrap' }}>
+                APEX<span style={{ color: '#059669', fontSize: '0.82rem', fontWeight: 800, marginLeft: '3px' }}>TRADING</span>
               </span>
 
               {/* Dynamic Market Status Badge (NSE/BSE 9:15 AM - 3:30 PM IST) */}
@@ -181,16 +172,16 @@ export default function KiteNavbar({
                 )}
               </span>
 
-              {/* US Market Status (Open from 7:00 PM / 8:00 PM IST) */}
+              {/* US Market Status */}
               {marketStatus.us.isOpen && (
                 <span 
                   title={marketStatus.us.tooltip}
                   className="hide-mobile"
                   style={{ 
                     fontSize: '0.52rem', 
-                    background: 'rgba(16, 185, 129, 0.15)', 
-                    color: '#10b981', 
-                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                    background: '#ecfdf5', 
+                    color: '#059669', 
+                    border: '1px solid #a7f3d0',
                     padding: '1px 4px', 
                     borderRadius: '3px', 
                     fontWeight: 700 
@@ -202,7 +193,7 @@ export default function KiteNavbar({
             </div>
           </div>
 
-          <div className="hide-mobile" style={{ height: '20px', width: '1px', background: '#1e293b' }} />
+          <div className="hide-mobile" style={{ height: '20px', width: '1px', background: '#e2e8f0' }} />
 
           {/* Desktop Indices Pills */}
           <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -213,16 +204,16 @@ export default function KiteNavbar({
                   display: 'flex',
                   alignItems: 'baseline',
                   gap: '5px',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid #1c2738',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
                   padding: '3px 8px',
                   borderRadius: '5px',
                   cursor: 'pointer'
                 }}
                 title="Click to chart NIFTY 50"
               >
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8' }}>NIFTY</span>
-                <span className="font-mono" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#f1f5f9' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>NIFTY</span>
+                <span className="font-mono" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0f172a' }}>
                   {formatCurrency(nifty.price, nifty.currency)}
                 </span>
                 <span className={`font-mono ${nifty.change >= 0 ? 'profit-text' : 'loss-text'}`} style={{ fontSize: '0.68rem', fontWeight: 600 }}>
@@ -239,16 +230,16 @@ export default function KiteNavbar({
                   display: 'flex',
                   alignItems: 'baseline',
                   gap: '5px',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid #1c2738',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
                   padding: '3px 8px',
                   borderRadius: '5px',
                   cursor: 'pointer'
                 }}
                 title="Click to chart SENSEX"
               >
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8' }}>SENSEX</span>
-                <span className="font-mono" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#f1f5f9' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>SENSEX</span>
+                <span className="font-mono" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0f172a' }}>
                   {formatCurrency(sensex.price, sensex.currency)}
                 </span>
                 <span className={`font-mono ${sensex.change >= 0 ? 'profit-text' : 'loss-text'}`} style={{ fontSize: '0.68rem', fontWeight: 600 }}>
@@ -259,9 +250,9 @@ export default function KiteNavbar({
           </div>
         </div>
 
-        {/* 2. CENTER: All 8 Navigation Tabs on Desktop */}
+        {/* 2. CENTER: All 8 Navigation Tabs on Desktop (Hidden on mobile & vertical screens in favor of Bottom Nav) */}
         <div 
-          className="hide-mobile nav-tabs-scroll" 
+          className="hide-vertical nav-tabs-scroll" 
           style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -278,6 +269,16 @@ export default function KiteNavbar({
           >
             <BarChart3 size={13} />
             <span>Terminal</span>
+          </button>
+
+          <button
+            className={`nav-tab ${activeTab === 'option-chain' ? 'active' : ''}`}
+            onClick={() => setActiveTab('option-chain')}
+            style={{ fontSize: '0.78rem', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}
+            title="NSE & BSE Index Option Chain"
+          >
+            <Layers size={13} />
+            <span>Option Chain</span>
           </button>
 
           <button
@@ -354,18 +355,18 @@ export default function KiteNavbar({
               style={{
                 padding: '5px 9px',
                 fontSize: '0.72rem',
-                background: 'rgba(99, 102, 241, 0.12)',
-                borderColor: 'rgba(99, 102, 241, 0.4)',
-                color: '#a5b4fc',
+                background: '#ecfdf5',
+                borderColor: '#a7f3d0',
+                color: '#059669',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '5px',
                 cursor: 'pointer',
                 fontWeight: 700
               }}
-              title="Install Apex Trading App on your desktop or mobile device"
+              title="Install Apex Trading App on your device"
             >
-              <Smartphone size={13} color="#818cf8" />
+              <Smartphone size={13} color="#059669" />
               <span className="hide-mobile">Install App</span>
             </button>
           )}
@@ -377,17 +378,17 @@ export default function KiteNavbar({
             style={{ 
               padding: '5px 8px', 
               fontSize: '0.75rem', 
-              background: '#0e1420', 
-              borderColor: '#222f44', 
+              background: '#f8fafc', 
+              borderColor: '#e2e8f0', 
               display: 'flex', 
               alignItems: 'center', 
               gap: '5px' 
             }}
             title="Search Any Stock or Index (Ctrl+K)"
           >
-            <Search size={13} color="#38bdf8" />
-            <span className="hide-mobile" style={{ color: '#cbd5e1' }}>Search</span>
-            <span className="hide-mobile" style={{ fontSize: '0.62rem', background: '#1e293b', padding: '1px 3px', borderRadius: '3px', color: '#94a3b8' }}>/</span>
+            <Search size={13} color="#059669" />
+            <span className="hide-mobile" style={{ color: '#334155' }}>Search</span>
+            <span className="hide-mobile" style={{ fontSize: '0.62rem', background: '#f1f5f9', padding: '1px 3px', borderRadius: '3px', color: '#64748b' }}>/</span>
           </button>
 
           {/* Margin Badge (Links to Profile & Funds) */}
@@ -396,8 +397,8 @@ export default function KiteNavbar({
             className="hide-mobile"
             style={{ 
               cursor: 'pointer', 
-              background: '#0d131f', 
-              border: '1px solid #222f44', 
+              background: '#ecfdf5', 
+              border: '1px solid #a7f3d0', 
               borderRadius: '6px', 
               padding: '4px 8px',
               display: 'flex',
@@ -407,12 +408,12 @@ export default function KiteNavbar({
             title="View Trading Funds & Margin in Profile"
           >
             <div>
-              <div style={{ fontSize: '0.55rem', color: '#64748b', textTransform: 'uppercase', lineHeight: 1 }}>Margin</div>
-              <div className="font-mono" style={{ fontSize: '0.78rem', fontWeight: 800, color: '#10b981' }}>
+              <div style={{ fontSize: '0.55rem', color: '#047857', textTransform: 'uppercase', lineHeight: 1, fontWeight: 700 }}>Margin</div>
+              <div className="font-mono" style={{ fontSize: '0.78rem', fontWeight: 800, color: '#059669' }}>
                 ₹{cashBalance.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </div>
             </div>
-            <Plus size={11} color="#10b981" />
+            <Plus size={11} color="#059669" />
           </div>
 
           {/* User Account Profile Pill */}
@@ -424,8 +425,8 @@ export default function KiteNavbar({
                 alignItems: 'center',
                 gap: '8px',
                 padding: '4px 10px',
-                background: activeTab === 'profile' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                border: activeTab === 'profile' ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid #222f44',
+                background: activeTab === 'profile' ? '#ecfdf5' : '#f8fafc',
+                border: activeTab === 'profile' ? '1px solid #10b981' : '1px solid #e2e8f0',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -437,7 +438,7 @@ export default function KiteNavbar({
                 <img src={currentUser.picture} alt={currentUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
 
-              <span className="hide-mobile" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f8fafc', whiteSpace: 'nowrap' }}>
+              <span className="hide-mobile" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap' }}>
                 {currentUser.name}
               </span>
             </div>
@@ -445,9 +446,9 @@ export default function KiteNavbar({
             <button
               onClick={onOpenAuth}
               style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid #233047',
-                color: '#f1f5f9',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                color: '#0f172a',
                 padding: '5px 8px',
                 borderRadius: '6px',
                 cursor: 'pointer',
@@ -468,46 +469,6 @@ export default function KiteNavbar({
               <span className="hide-mobile">Sign in</span>
             </button>
           )}
-
-          {/* Mobile Watchlist Drawer Button */}
-          <button
-            className="show-mobile"
-            onClick={onToggleWatchlist}
-            style={{
-              background: '#0e1420', 
-              border: '1px solid #222f44', 
-              color: '#38bdf8',
-              padding: '6px 8px', 
-              borderRadius: '6px', 
-              cursor: 'pointer',
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center'
-            }}
-            title="Open Watchlist"
-          >
-            <List size={16} />
-          </button>
-
-          {/* Mobile All Features Menu (Hamburger) */}
-          <button
-            className="show-mobile"
-            onClick={onOpenMobileMenu}
-            style={{
-              background: '#0e1420',
-              border: '1px solid #222f44',
-              color: '#10b981',
-              padding: '6px 8px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            title="Open All Features Menu"
-          >
-            <Menu size={16} />
-          </button>
         </div>
       </div>
     </header>

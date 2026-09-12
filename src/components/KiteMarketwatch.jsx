@@ -72,8 +72,8 @@ export default function KiteMarketwatch({
 
   return (
     <div style={{ 
-      background: '#0d131f', 
-      borderRight: '1px solid #1f2a3d', 
+      background: '#ffffff', 
+      borderRight: '1px solid #e2e8f0', 
       display: 'flex', 
       flexDirection: 'column', 
       height: '100%',
@@ -81,7 +81,7 @@ export default function KiteMarketwatch({
       userSelect: 'none'
     }}>
       {/* Quick Search inside Marketwatch */}
-      <div style={{ padding: '10px 14px', borderBottom: '1px solid #1f2a3d', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ padding: '10px 14px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <Search size={14} color="#64748b" />
         <input
           type="text"
@@ -91,7 +91,7 @@ export default function KiteMarketwatch({
           style={{
             background: 'transparent',
             border: 'none',
-            color: '#fff',
+            color: '#0f172a',
             fontSize: '0.8rem',
             width: '100%',
             outline: 'none'
@@ -100,15 +100,16 @@ export default function KiteMarketwatch({
         <button
           onClick={onOpenSearch}
           style={{
-            background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2))',
-            border: '1px solid rgba(6, 182, 212, 0.4)',
-            color: '#38bdf8',
-            padding: '3px 8px',
-            borderRadius: '4px',
+            background: 'linear-gradient(135deg, #059669, #10b981)',
+            border: 'none',
+            color: '#ffffff',
+            padding: '4px 10px',
+            borderRadius: '6px',
             fontSize: '0.72rem',
             cursor: 'pointer',
             fontWeight: 700,
-            whiteSpace: 'nowrap'
+            whiteSpace: 'nowrap',
+            boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)'
           }}
           title="Search and add any stock or index"
         >
@@ -117,30 +118,30 @@ export default function KiteMarketwatch({
       </div>
 
       {/* Marketwatch Items Count indicator */}
-      <div style={{ padding: '6px 14px', fontSize: '0.72rem', color: '#64748b', display: 'flex', justifyContent: 'space-between', background: '#0a0f18', borderBottom: '1px solid #161f30' }}>
+      <div style={{ padding: '6px 14px', fontSize: '0.72rem', color: '#64748b', display: 'flex', justifyContent: 'space-between', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
         <span>{symbolsToRender.length} / 50 items</span>
-        <span style={{ color: '#38bdf8', fontWeight: 600 }}>{activeWatchlist?.name || `Watchlist ${activeWlIdx + 1}`}</span>
+        <span style={{ color: '#059669', fontWeight: 700 }}>{activeWatchlist?.name || `Watchlist ${activeWlIdx + 1}`}</span>
       </div>
 
       {/* Stock Items List */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {symbolsToRender.length === 0 ? (
-          <div style={{ padding: '45px 20px', textAlign: 'center', color: '#94a3b8' }}>
+          <div style={{ padding: '45px 20px', textAlign: 'center', color: '#64748b' }}>
             <div style={{ 
               width: '42px', 
               height: '42px', 
               borderRadius: '10px', 
-              background: 'rgba(6, 182, 212, 0.12)', 
-              color: '#38bdf8', 
+              background: '#ecfdf5', 
+              color: '#059669', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
               margin: '0 auto 12px auto',
-              border: '1px solid rgba(6, 182, 212, 0.3)'
+              border: '1px solid #a7f3d0'
             }}>
               <Plus size={20} />
             </div>
-            <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff', marginBottom: '4px' }}>
+            <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#0f172a', marginBottom: '4px' }}>
               Watchlist is Empty
             </div>
             <p style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.4, margin: '0 0 14px 0' }}>
@@ -176,11 +177,12 @@ export default function KiteMarketwatch({
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '10px 14px',
-                  borderBottom: '1px solid #141c2b',
-                  background: isSelected ? 'rgba(56, 189, 248, 0.08)' : isHovered ? '#121a29' : 'transparent',
+                  borderBottom: '1px solid #f1f5f9',
+                  background: isSelected ? '#ecfdf5' : isHovered ? '#f0fdf4' : 'transparent',
                   cursor: 'pointer',
                   position: 'relative',
-                  transition: 'background 0.1s ease'
+                  transition: 'background 0.1s ease',
+                  borderLeft: isSelected ? '3px solid #10b981' : '3px solid transparent'
                 }}
               >
                 {/* Left: Stock Name & Exchange */}
@@ -189,17 +191,17 @@ export default function KiteMarketwatch({
                     <span style={{ 
                       fontWeight: 700, 
                       fontSize: '0.86rem', 
-                      color: isSelected ? '#38bdf8' : '#f1f5f9' 
+                      color: isSelected ? '#047857' : '#0f172a' 
                     }}>
                       {displayName}
                     </span>
                     <span style={{ 
                       fontSize: '0.62rem', 
-                      color: isIndex ? '#f59e0b' : (isETF ? '#10b981' : '#64748b'),
-                      background: isIndex ? 'rgba(245, 158, 11, 0.1)' : (isETF ? 'rgba(16, 185, 129, 0.1)' : 'transparent'),
-                      padding: isIndex || isETF ? '1px 4px' : '0',
+                      color: isIndex ? '#d97706' : (isETF ? '#059669' : '#64748b'),
+                      background: isIndex ? '#fef3c7' : (isETF ? '#ecfdf5' : '#f1f5f9'),
+                      padding: '1px 5px',
                       borderRadius: '3px',
-                      fontWeight: 600
+                      fontWeight: 700
                     }}>
                       {isIndex ? 'IDX' : (isETF ? 'ETF' : (quote?.exchange || 'NSE'))}
                     </span>
@@ -219,10 +221,10 @@ export default function KiteMarketwatch({
                     <button
                       onClick={() => onOpenOrderModal(quote || { symbol: sym, name: displayName, price: quote?.price || 100 }, 'BUY')}
                       style={{
-                        background: '#387ed1',
+                        background: '#059669',
                         color: '#fff',
                         border: 'none',
-                        borderRadius: '3px',
+                        borderRadius: '4px',
                         padding: '3px 8px',
                         fontSize: '0.72rem',
                         fontWeight: 700,
@@ -237,10 +239,10 @@ export default function KiteMarketwatch({
                     <button
                       onClick={() => onOpenOrderModal(quote || { symbol: sym, name: displayName, price: quote?.price || 100 }, 'SELL')}
                       style={{
-                        background: '#ff5722',
+                        background: '#e11d48',
                         color: '#fff',
                         border: 'none',
-                        borderRadius: '3px',
+                        borderRadius: '4px',
                         padding: '3px 8px',
                         fontSize: '0.72rem',
                         fontWeight: 700,
@@ -255,10 +257,10 @@ export default function KiteMarketwatch({
                     <button
                       onClick={() => onSelectSymbol(sym)}
                       style={{
-                        background: '#1e293b',
-                        color: '#94a3b8',
-                        border: 'none',
-                        borderRadius: '3px',
+                        background: '#f1f5f9',
+                        color: '#334155',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '4px',
                         padding: '3px 6px',
                         cursor: 'pointer'
                       }}
@@ -271,15 +273,15 @@ export default function KiteMarketwatch({
                     <button
                       onClick={() => onRemoveSymbol(activeWatchlist.id, sym)}
                       style={{
-                        background: '#1e293b',
+                        background: '#f1f5f9',
                         color: '#64748b',
-                        border: 'none',
-                        borderRadius: '3px',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '4px',
                         padding: '3px 6px',
                         cursor: 'pointer'
                       }}
                       title="Delete"
-                      onMouseEnter={(e) => e.currentTarget.style.color = '#f43f5e'}
+                      onMouseEnter={(e) => e.currentTarget.style.color = '#e11d48'}
                       onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}
                     >
                       <Trash2 size={12} />
@@ -287,13 +289,13 @@ export default function KiteMarketwatch({
                   </div>
                 ) : (
                   <div style={{ textAlign: 'right' }}>
-                    <div className="font-mono" style={{ fontSize: '0.86rem', fontWeight: 700, color: isUp ? '#10b981' : '#f43f5e' }}>
+                    <div className="font-mono" style={{ fontSize: '0.86rem', fontWeight: 700, color: isUp ? '#059669' : '#e11d48' }}>
                       {quote?.price != null ? formatCurrency(quote.price, currency) : 'Loading...'}
                     </div>
                     {quote?.change != null && (
                       <div 
                         className="font-mono" 
-                        style={{ fontSize: '0.7rem', color: isUp ? '#10b981' : '#f43f5e' }}
+                        style={{ fontSize: '0.7rem', color: isUp ? '#059669' : '#e11d48' }}
                       >
                         {isUp ? `+${quote.change?.toFixed(2)}` : quote.change?.toFixed(2)} ({formatPercent(quote.changePercent)})
                       </div>
@@ -309,8 +311,8 @@ export default function KiteMarketwatch({
       {/* Watchlist Switcher Tabs at Bottom (1, 2, 3, 4, 5) */}
       <div style={{ 
         display: 'flex', 
-        borderTop: '1px solid #1f2a3d', 
-        background: '#090d16',
+        borderTop: '1px solid #e2e8f0', 
+        background: '#ffffff',
         height: '36px',
         alignItems: 'center'
       }}>
@@ -321,10 +323,10 @@ export default function KiteMarketwatch({
             style={{
               flex: 1,
               height: '100%',
-              background: activeWlIdx === idx ? '#131b2c' : 'transparent',
+              background: activeWlIdx === idx ? '#ecfdf5' : 'transparent',
               border: 'none',
-              borderTop: activeWlIdx === idx ? '2px solid #38bdf8' : '2px solid transparent',
-              color: activeWlIdx === idx ? '#38bdf8' : '#64748b',
+              borderTop: activeWlIdx === idx ? '2px solid #059669' : '2px solid transparent',
+              color: activeWlIdx === idx ? '#059669' : '#64748b',
               fontSize: '0.75rem',
               fontWeight: 700,
               cursor: 'pointer'

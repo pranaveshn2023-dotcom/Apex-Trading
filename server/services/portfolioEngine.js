@@ -141,6 +141,53 @@ export function calculateCharges(product, action, price, qty) {
 }
 
 /**
+ * Check if the exchange is actively open for a given symbol
+ * - Indian Equities (NSE/BSE): Mon-Fri 9:15 AM - 3:30 PM IST
+ * - US Equities: Mon-Fri 7:00 PM - 1:30 AM IST (or standard 8:00 PM - 2:30 AM IST)
+ */
+export function isMarketOpenForSymbol(symbol) {
+  const now = new Date();
+  // Convert to IST (UTC + 5:30)
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const ist = new Date(utc + 3600000 * 5.5);
+  
+  const day = ist.getDay(); // 0 = Sunday, 6 = Saturday
+  const totalMinutes = ist.getHours() * 60 + ist.getMinutes();
+
+  const isUS = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'META', '^GSPC', '^IXIC', '^DJI'].includes(symbol)
+    || (!symbol.endsWith('.NS') && !symbol.endsWith('.BO') && !symbol.startsWith('^NSE') && !symbol.startsWith('^BSE') && !symbol.startsWith('^CNX') && !symbol.startsWith('^CRSLDX'));
+
+  if (isUS) {
+    const openMinutes = 19 * 60; // 7:00 PM IST
+    const closeMinutes = 1 * 60 + 30; // 1:30 AM IST
+    if (day >= 1 && day <= 5 && totalMinutes >= openMinutes) return true;
+    if (day >= 2 && day <= 6 && totalMinutes < closeMinutes) return true;
+    return false;
+  }
+
+  // Indian Equities
+  if (day === 0 || day === 6) return false;
+  return totalMinutes >= (9 * 60 + 15) && totalMinutes < (15 * 60 + 30);
+}
+
+/**
+ * Cancel an open / pending / AMO order
+ */
+export async function cancelOrder(orderId) {
+  const order = state.orders.find(o => o.id === orderId);
+  if (!order) {
+    throw new Error('Order not found');
+  }
+  if (order.status !== 'AMO' && order.status !== 'PENDING') {
+    throw new Error(`Cannot cancel order with status: ${order.status}`);
+  }
+  order.status = 'CANCELLED';
+  order.cancelledAt = new Date().toISOString();
+  savePortfolio();
+  return order;
+}
+
+/**
  * Execute or place an order
  */
 export async function placeOrder({
@@ -165,10 +212,33 @@ export async function placeOrder({
     throw new Error('Quantity must be greater than 0');
   }
 
+  const marketOpen = isMarketOpenForSymbol(symbol);
   let executionPrice = marketPrice;
   let status = 'EXECUTED';
 
-  if (orderType === 'LIMIT') {
+  if (!marketOpen) {
+    // Non-market hours constraint:
+    // Order is TAKEN and queued as AMO (After-Market Order)
+    // BUT NOT PROCESSED to buy or sell stock (funds & positions untouched)
+    status = 'AMO';
+    executionPrice = limitPrice || marketPrice;
+
+    // Validate that user has necessary resources before taking AMO
+    const charges = calculateCharges(product, action, executionPrice, qty);
+    const requiredCapital = executionPrice * qty + charges.total;
+
+    if (action === 'BUY' && state.cashBalance < requiredCapital) {
+      throw new Error(`Insufficient funds for AMO order. Required: ₹${requiredCapital.toLocaleString('en-IN', { maximumFractionDigits: 2 })}, Available: ₹${state.cashBalance.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`);
+    }
+
+    if (action === 'SELL' && product === 'CNC') {
+      const holdingIndex = state.holdings.findIndex(h => h.symbol === symbol);
+      const availableQty = holdingIndex >= 0 ? state.holdings[holdingIndex].qty : 0;
+      if (availableQty < qty) {
+        throw new Error(`Cannot place AMO SELL order. Insufficient holdings: Available ${availableQty}, Attempted ${qty}`);
+      }
+    }
+  } else if (orderType === 'LIMIT') {
     if (!limitPrice || limitPrice <= 0) {
       throw new Error('Limit price is required for LIMIT order');
     }
@@ -206,6 +276,8 @@ export async function placeOrder({
     stopLoss: stopLoss || null,
     target: target || null,
     status,
+    isAMO: !marketOpen,
+    message: !marketOpen ? 'After-Market Order (AMO) placed. Market is closed; order will be queued for market open.' : undefined,
     thesis,
     tags,
     timestamp: new Date().toISOString()
