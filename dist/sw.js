@@ -1,14 +1,16 @@
 // Apex Trading Service Worker — Resilient PWA Caching Strategy
-const CACHE_NAME = 'apextrade-v2';
+const CACHE_NAME = 'apextrade-v6';
 
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.svg',
   '/favicon.png',
+  '/favicon-32.png',
+  '/favicon-16.png',
   '/icon-192.png',
-  '/icon-512.png'
+  '/icon-512.png',
+  '/logo.png'
 ];
 
 self.addEventListener('install', (event) => {

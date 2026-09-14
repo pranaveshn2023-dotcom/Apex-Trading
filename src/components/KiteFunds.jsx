@@ -77,16 +77,14 @@ export default function KiteFunds({
 
         <button
           onClick={() => {
-            const entered = window.prompt('Reset entire paper portfolio? Enter starting capital in ₹ (e.g. 100000 or 0):', '0');
-            if (entered !== null) {
-              const cap = Math.max(0, parseFloat(entered) || 0);
-              onResetPortfolio(cap);
+            if (typeof onResetPortfolio === 'function') {
+              onResetPortfolio();
             }
           }}
           className="btn-ghost"
           style={{ fontSize: '0.825rem', color: '#be123c', borderColor: '#fecdd3', background: '#fff1f2', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
-          <RotateCcw size={14} /> Reset Account / Set Capital
+          <RotateCcw size={14} /> Reset Account
         </button>
       </div>
 

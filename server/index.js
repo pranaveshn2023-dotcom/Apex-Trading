@@ -295,7 +295,10 @@ app.post('/api/portfolio/update-funds', async (req, res) => {
 app.post('/api/portfolio/reset', async (req, res) => {
   try {
     const { capital } = req.body;
-    const summary = await resetPortfolio(capital ? parseFloat(capital) : undefined);
+    const customCap = (capital !== undefined && capital !== null && !isNaN(parseFloat(capital)))
+      ? Math.max(0, parseFloat(capital))
+      : 0;
+    const summary = await resetPortfolio(customCap);
     res.json({ success: true, data: summary });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -380,15 +383,36 @@ app.post('/api/auth/logout', async (req, res) => {
 });
 
 // --- STATIC ASSETS & SPA ROUTING (Full-Stack Support for Deno Deploy & Production) ---
-app.use(express.static(DIST_DIR, {
+// 1. Hashed assets in /assets/ can be safely cached long-term
+app.use('/assets', express.static(path.join(DIST_DIR, 'assets'), {
   maxAge: '1y',
-  immutable: true,
+  immutable: true
+}));
+
+// 2. Root files (manifest.json, sw.js, icons, etc.) must revalidate so updates are instant
+app.use(express.static(DIST_DIR, {
+  maxAge: '0',
+  etag: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('manifest.json') || filePath.endsWith('sw.js')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    }
+  },
   index: false
 }));
 
 app.use(express.static(PUBLIC_DIR, {
   maxAge: '0',
-  etag: true
+  etag: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('manifest.json') || filePath.endsWith('sw.js')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    }
+  }
 }));
 
 // SPA Fallback: All client-side routes serve dist/index.html (Express 5 compatible)

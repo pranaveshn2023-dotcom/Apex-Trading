@@ -183,6 +183,13 @@ export async function cancelOrder(orderId) {
   }
   order.status = 'CANCELLED';
   order.cancelledAt = new Date().toISOString();
+
+  // Refund blocked capital on BUY orders so wallet balance restores immediately
+  if ((order.action === 'BUY' || order.type === 'BUY') && order.blockedCapital) {
+    state.cashBalance = +(state.cashBalance + order.blockedCapital).toFixed(2);
+    order.blockedCapital = 0;
+  }
+
   savePortfolio();
   return order;
 }
@@ -280,16 +287,19 @@ export async function placeOrder({
     message: !marketOpen ? 'After-Market Order (AMO) placed. Market is closed; order will be queued for market open.' : undefined,
     thesis,
     tags,
+    blockedCapital: action === 'BUY' ? requiredCapital : 0,
     timestamp: new Date().toISOString()
   };
 
-  if (status === 'EXECUTED') {
-    if (action === 'BUY') {
-      if (state.cashBalance < requiredCapital) {
-        throw new Error(`Insufficient funds. Required: ₹${requiredCapital.toLocaleString('en-IN', { maximumFractionDigits: 2 })}, Available: ₹${state.cashBalance.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`);
-      }
+  if (action === 'BUY') {
+    if (state.cashBalance < requiredCapital) {
+      throw new Error(`Insufficient funds. Required: ₹${requiredCapital.toLocaleString('en-IN', { maximumFractionDigits: 2 })}, Available: ₹${state.cashBalance.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`);
+    }
 
-      state.cashBalance -= requiredCapital;
+    // Immediately decrease wallet margin so user sees accurate balance after every BUY
+    state.cashBalance = +(state.cashBalance - requiredCapital).toFixed(2);
+
+    if (status === 'EXECUTED') {
 
       if (product === 'CNC') {
         // Add or average down holding
@@ -701,9 +711,10 @@ export async function updateCashBalance(newCashAmount) {
 /**
  * Reset portfolio or set custom initial funds
  */
-export async function resetPortfolio(customCapital = INITIAL_CAPITAL) {
-  state.initialCapital = customCapital;
-  state.cashBalance = customCapital;
+export async function resetPortfolio(customCapital = 0) {
+  const cap = (customCapital !== undefined && customCapital !== null && !isNaN(Number(customCapital))) ? Math.max(0, Number(customCapital)) : 0;
+  state.initialCapital = cap;
+  state.cashBalance = cap;
   state.realizedPnl = 0;
   state.holdings = [];
   state.positions = [];

@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { 
-  User, 
-  Wallet, 
-  Plus, 
-  RotateCcw, 
-  Lock, 
-  KeyRound, 
-  LogOut, 
-  CheckCircle2, 
-  Database, 
-  RefreshCw, 
-  Sliders, 
-  Info, 
+import {
+  User,
+  Wallet,
+  Plus,
+  RotateCcw,
+  Lock,
+  KeyRound,
+  LogOut,
+  CheckCircle2,
+  Database,
+  RefreshCw,
+  Sliders,
+  Info,
   Lightbulb,
   CreditCard,
   ShieldCheck
@@ -45,6 +45,7 @@ export default function ProfileTab({
 
   // Cache state
   const [cacheCleared, setCacheCleared] = useState(false);
+  const [showCacheToast, setShowCacheToast] = useState(false);
 
   const cashBalance = portfolio?.cashBalance || 0;
   const totalInvested = portfolio?.totalInvested || 0;
@@ -92,23 +93,48 @@ export default function ProfileTab({
     }
   };
 
-  const handleClearCache = () => {
+  const handleClearCache = async () => {
+    try {
+      // 1. Purge CacheStorage (Service Worker & HTTP Caches)
+      if ('caches' in window) {
+        const cacheKeys = await window.caches.keys();
+        await Promise.all(cacheKeys.map(key => window.caches.delete(key)));
+      }
+    } catch (e) {
+      console.warn('Cache clear error:', e);
+    }
+
+    // 2. Clear sessionStorage
+    try {
+      sessionStorage.clear();
+    } catch (e) {
+      console.warn('Session clear error:', e);
+    }
+
+    // 3. Clear non-essential localStorage items, strictly preserving user authentication and security PIN
     const auth = localStorage.getItem('ax_current_user');
     const token = localStorage.getItem('ax_auth_token');
     const pin = localStorage.getItem('ax_terminal_pin');
     const pwa = localStorage.getItem('apex_pwa_installed');
+    const unlocked = localStorage.getItem('ax_screen_unlocked');
+    const unlockedSession = localStorage.getItem('ax_unlocked_session');
 
     localStorage.clear();
 
-    // Preserve authentication and pin
     if (auth) localStorage.setItem('ax_current_user', auth);
     if (token) localStorage.setItem('ax_auth_token', token);
     if (pin) localStorage.setItem('ax_terminal_pin', pin);
     if (pwa) localStorage.setItem('apex_pwa_installed', pwa);
+    if (unlocked) localStorage.setItem('ax_screen_unlocked', unlocked);
+    if (unlockedSession) localStorage.setItem('ax_unlocked_session', unlockedSession);
 
+    // 4. Show neat push notification toast for exactly 1 second, then auto-dismiss without reloading page
     setCacheCleared(true);
+    setShowCacheToast(true);
+
     setTimeout(() => {
-      window.location.reload();
+      setShowCacheToast(false);
+      setCacheCleared(false);
     }, 1000);
   };
 
@@ -143,7 +169,7 @@ export default function ProfileTab({
       gap: '24px',
       fontFamily: "'Outfit', -apple-system, BlinkMacSystemFont, sans-serif"
     }}>
-      
+
       {/* 1. Profile Header Card */}
       <div style={{
         background: '#ffffff',
@@ -248,28 +274,27 @@ export default function ProfileTab({
           <button
             type="button"
             onClick={() => {
-              const entered = window.prompt('Reset entire paper portfolio? Enter starting capital in ₹ (e.g. 100000 or 0):', '100000');
-              if (entered !== null) {
-                const cap = Math.max(0, parseFloat(entered) || 0);
-                onResetPortfolio(cap);
+              if (typeof onResetPortfolio === 'function') {
+                onResetPortfolio();
               }
             }}
             style={{
               background: '#ffffff',
               border: '1px solid #fecdd3',
               color: '#be123c',
-              padding: '6px 12px',
+              padding: '7px 14px',
               borderRadius: '8px',
               fontSize: '0.78rem',
               fontWeight: 600,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              transition: 'all 0.15s ease'
             }}
           >
             <RotateCcw size={13} />
-            <span>Reset Account / Set Capital</span>
+            <span>Reset Account</span>
           </button>
         </div>
 
@@ -458,7 +483,7 @@ export default function ProfileTab({
               }}
             >
               <Lock size={13} />
-              <span>Lock Screen (Ctrl+L)</span>
+              <span>Lock Screen</span>
             </button>
 
             <button
@@ -500,7 +525,7 @@ export default function ProfileTab({
             Status: <b style={{ color: '#059669' }}>Active with 4-digit PIN ({currentPin.replace(/./g, '•')})</b>
           </span>
           <span style={{ color: '#64748b' }}>
-            Quick Shortcut: <kbd style={{ background: '#e2e8f0', color: '#0f172a', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Ctrl+L</kbd>
+            Auto-locks on refresh &amp; after 25s background inactivity
           </span>
         </div>
       </div>
@@ -584,7 +609,6 @@ export default function ProfileTab({
               Cache & Local State
             </h2>
             <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '2px 0 0 0' }}>
-              Purges local quotes cache and resets offline buffers while keeping your authentication intact.
             </p>
           </div>
         </div>
@@ -601,14 +625,15 @@ export default function ProfileTab({
             borderRadius: '8px',
             fontWeight: 700,
             fontSize: '0.82rem',
-            cursor: 'pointer',
+            cursor: cacheCleared ? 'default' : 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px'
+            gap: '6px',
+            transition: 'all 0.15s ease'
           }}
         >
-          <RefreshCw size={14} />
-          <span>{cacheCleared ? 'Cache Cleared! Reloading...' : 'Clear Cache & Reload'}</span>
+          <RefreshCw size={14} className={cacheCleared ? 'animate-spin' : ''} />
+          <span>{cacheCleared ? 'Clearing...' : 'Clear Cache'}</span>
         </button>
       </div>
 
@@ -641,7 +666,7 @@ export default function ProfileTab({
                   borderRadius: '10px',
                   fontWeight: 700
                 }}>
-                  v2.4.0 Production
+                  v1.0 Production
                 </span>
               </div>
               <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '3px 0 0 0' }}>
@@ -912,6 +937,51 @@ export default function ProfileTab({
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Push Notification Popup for Clear Cache - 1s Auto-dismiss */}
+      {showCacheToast && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 999999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '10px 16px',
+            background: 'rgba(15, 23, 42, 0.95)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(16, 185, 129, 0.4)',
+            borderRadius: '10px',
+            boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 0 12px rgba(16, 185, 129, 0.2)',
+            color: '#ffffff',
+            fontSize: '0.84rem',
+            fontWeight: 600,
+            pointerEvents: 'none'
+          }}
+        >
+          <div style={{
+            width: '20px',
+            height: '20px',
+            borderRadius: '50%',
+            background: 'rgba(16, 185, 129, 0.2)',
+            border: '1px solid #10b981',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <CheckCircle2 size={13} color="#10b981" />
+          </div>
+          <span style={{ color: '#f8fafc', fontWeight: 600, letterSpacing: '-0.01em' }}>
+            Cache cleared successfully
+          </span>
         </div>
       )}
 

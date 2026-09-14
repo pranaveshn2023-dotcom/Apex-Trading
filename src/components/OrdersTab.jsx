@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ListOrdered, CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react';
 import { formatINR, formatDate, formatQty } from '../utils/formatters';
 
 export default function OrdersTab({ orders, onRefreshPortfolio }) {
   const [filter, setFilter] = useState('ALL');
   const [cancellingId, setCancellingId] = useState(null);
+  const [localOrders, setLocalOrders] = useState(orders || []);
 
-  const filteredOrders = (orders || []).filter(o => {
+  useEffect(() => {
+    setLocalOrders(orders || []);
+  }, [orders]);
+
+  const filteredOrders = (localOrders || []).filter(o => {
     if (filter === 'ALL') return true;
     if (filter === 'AMO') return o.status === 'AMO';
     if (filter === 'PENDING') return o.status === 'PENDING' || o.status === 'AMO';
@@ -14,16 +19,31 @@ export default function OrdersTab({ orders, onRefreshPortfolio }) {
   });
 
   const handleCancelOrder = async (orderId) => {
-    if (!confirm('Are you sure you want to cancel this order?')) return;
     setCancellingId(orderId);
+
+    // Instant optimistic update
+    setLocalOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'CANCELLED', cancelledAt: new Date().toISOString() } : o));
+
     try {
-      const res = await fetch(`/api/orders/${orderId}/cancel`, { method: 'POST' });
+      const res = await fetch(`/api/orders/${orderId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
       const data = await res.json();
-      if (data.success && onRefreshPortfolio) {
-        onRefreshPortfolio();
+      if (data.success) {
+        if (data.portfolio && onRefreshPortfolio) {
+          onRefreshPortfolio(data.portfolio);
+        } else if (onRefreshPortfolio) {
+          onRefreshPortfolio();
+        }
+      } else {
+        // Revert on failure
+        setLocalOrders(orders || []);
+        alert(data.error || 'Failed to cancel order');
       }
     } catch (err) {
       console.error('Cancel order error:', err);
+      setLocalOrders(orders || []);
     } finally {
       setCancellingId(null);
     }
@@ -168,21 +188,30 @@ export default function OrdersTab({ orders, onRefreshPortfolio }) {
                   </div>
 
                   {canCancel && (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
                       <button
-                        onClick={() => handleCancelOrder(o.id)}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancelOrder(o.id);
+                        }}
                         disabled={cancellingId === o.id}
                         className="btn-ghost"
                         style={{
                           background: '#fff1f2',
                           borderColor: '#fecdd3',
                           color: '#be123c',
-                          padding: '4px 12px',
+                          padding: '6px 14px',
                           borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: cancellingId === o.id ? 'not-allowed' : 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
                         }}
                       >
+                        <XCircle size={13} />
                         {cancellingId === o.id ? 'Cancelling...' : 'Cancel Order'}
                       </button>
                     </div>
@@ -302,17 +331,27 @@ export default function OrdersTab({ orders, onRefreshPortfolio }) {
                     <td style={{ textAlign: 'right' }}>
                       {canCancel ? (
                         <button
-                          onClick={() => handleCancelOrder(o.id)}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancelOrder(o.id);
+                          }}
                           disabled={cancellingId === o.id}
                           className="btn-ghost"
                           style={{
-                            padding: '3px 8px',
-                            fontSize: '0.72rem',
+                            padding: '4px 10px',
+                            fontSize: '0.74rem',
+                            fontWeight: 700,
                             color: '#be123c',
                             borderColor: '#fecdd3',
-                            background: '#fff1f2'
+                            background: '#fff1f2',
+                            cursor: cancellingId === o.id ? 'not-allowed' : 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
                           }}
                         >
+                          <XCircle size={11} />
                           {cancellingId === o.id ? '...' : 'Cancel'}
                         </button>
                       ) : (

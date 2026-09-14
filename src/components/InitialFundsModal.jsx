@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Wallet, CheckCircle2, Sparkles, ArrowRight } from 'lucide-react';
+import { Wallet, CheckCircle2, Sparkles, ArrowRight, X } from 'lucide-react';
 import { formatINR } from '../utils/formatters';
 import confetti from 'canvas-confetti';
 import ApexLogo from './ApexLogo';
 
-export default function InitialFundsModal({ isOpen, onClose, onSetInitialFunds }) {
+export default function InitialFundsModal({ isOpen, onClose, onSetInitialFunds, onSetCapital }) {
   const [amount, setAmount] = useState('1000000'); // Default ₹10,00,000 (10 Lakhs)
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
+
+  const setFundsHandler = onSetInitialFunds || onSetCapital;
 
   const presets = [
     { label: '₹1 Lakh', value: 100000, desc: 'Small Account' },
@@ -20,16 +22,18 @@ export default function InitialFundsModal({ isOpen, onClose, onSetInitialFunds }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const parsed = parseFloat(amount.replace(/,/g, ''));
+    const parsed = parseFloat(amount.toString().replace(/,/g, ''));
     if (isNaN(parsed) || parsed < 0) return;
 
     setLoading(true);
     try {
-      await onSetInitialFunds(parsed);
+      if (typeof setFundsHandler === 'function') {
+        await setFundsHandler(parsed);
+      }
       confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
-      onClose();
+      if (onClose) onClose();
     } catch (err) {
-      alert(err.message);
+      alert(err.message || 'Failed to initialize funds');
     } finally {
       setLoading(false);
     }
@@ -45,10 +49,35 @@ export default function InitialFundsModal({ isOpen, onClose, onSetInitialFunds }
           background: '#ffffff',
           border: '1px solid #e2e8f0',
           borderRadius: '16px',
-          padding: '28px 24px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.15)'
+          padding: '24px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          position: 'relative'
         }}
       >
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              background: '#f1f5f9',
+              border: 'none',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: '#64748b'
+            }}
+          >
+            <X size={18} />
+          </button>
+        )}
+
         {/* Header with AX Logo */}
         <div style={{ textAlign: 'center', marginBottom: '22px' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>

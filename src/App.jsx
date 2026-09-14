@@ -88,9 +88,7 @@ function useViewport() {
 }
 
 export default function App() {
-  const [activeSymbol, setActiveSymbol] = useState(() => {
-    return localStorage.getItem('ax_active_symbol') || '^NSEI';
-  });
+  const [activeSymbol, setActiveSymbol] = useState('^NSEI');
   const [currentQuote, setCurrentQuote] = useState(null);
   const [indices, setIndices] = useState([]);
   const [timeframe, setTimeframe] = useState({ label: '5m', range: '5d', interval: '5m', title: '5 Minutes' });
@@ -194,14 +192,12 @@ export default function App() {
 
   // -------------------------------------------------------------
   // PIN SECURITY ARCHITECTURE:
-  // 1. Must be asked while logging in every time & on new sessions
-  // 2. Must NOT be asked while using the active session (any duration)
-  // 3. If running in the background for >= 25 seconds -> Lock immediately
+  // 1. Mandatory pass key / PIN required on every page refresh / load
+  // 2. Active session is kept unlocked during active usage
+  // 3. 25 seconds of background inactivity locks terminal immediately
+  // 4. Removed Ctrl+L shortcut to avoid intercepting browser address bar
   // -------------------------------------------------------------
-  const [isScreenLocked, setIsScreenLocked] = useState(() => {
-    // If not unlocked in this specific browser session, require PIN
-    return sessionStorage.getItem('ax_session_unlocked') !== 'true';
-  });
+  const [isScreenLocked, setIsScreenLocked] = useState(true);
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
@@ -209,7 +205,6 @@ export default function App() {
       localStorage.setItem('ax_current_user', JSON.stringify(user));
     } catch {}
     // Require PIN every time user logs into the app
-    sessionStorage.removeItem('ax_session_unlocked');
     sessionStorage.setItem('ax_screen_locked', 'true');
     setIsScreenLocked(true);
   };
@@ -221,23 +216,20 @@ export default function App() {
     localStorage.removeItem('ax_current_user');
     localStorage.removeItem('ax_auth_token');
     sessionStorage.removeItem('ax_screen_locked');
-    sessionStorage.removeItem('ax_session_unlocked');
     sessionStorage.removeItem('ax_bg_timestamp');
     setCurrentUser(null);
     setIsAuthOpen(false);
-    setIsScreenLocked(false);
+    setIsScreenLocked(true);
   };
 
   const handleLockScreen = useCallback(() => {
     setIsScreenLocked(true);
-    sessionStorage.removeItem('ax_session_unlocked');
     sessionStorage.setItem('ax_screen_locked', 'true');
   }, []);
 
   const handleUnlockScreen = useCallback(() => {
     setIsScreenLocked(false);
     sessionStorage.removeItem('ax_screen_locked');
-    sessionStorage.setItem('ax_session_unlocked', 'true');
     sessionStorage.removeItem('ax_bg_timestamp');
   }, []);
 
@@ -251,12 +243,13 @@ export default function App() {
     const handleEnterBackground = () => {
       // Record when the app was sent to the background (tab hidden or window blurred/minimized)
       const now = Date.now();
-      sessionStorage.setItem('ax_bg_timestamp', now.toString());
+      if (!sessionStorage.getItem('ax_bg_timestamp')) {
+        sessionStorage.setItem('ax_bg_timestamp', now.toString());
+      }
 
       if (bgTimer) clearTimeout(bgTimer);
       bgTimer = setTimeout(() => {
         // App kept in background for 25 seconds -> trigger PIN screen lock
-        sessionStorage.removeItem('ax_session_unlocked');
         sessionStorage.setItem('ax_screen_locked', 'true');
         setIsScreenLocked(true);
       }, BACKGROUND_LOCK_DELAY_MS);
@@ -268,7 +261,6 @@ export default function App() {
       if (bgTimeStr) {
         const elapsed = Date.now() - parseInt(bgTimeStr, 10);
         if (elapsed >= BACKGROUND_LOCK_DELAY_MS) {
-          sessionStorage.removeItem('ax_session_unlocked');
           sessionStorage.setItem('ax_screen_locked', 'true');
           setIsScreenLocked(true);
         }
@@ -300,40 +292,32 @@ export default function App() {
       handleReturnForeground();
     };
 
+    // Periodic check every second to catch background timeout even if browser throttles timer
+    const bgCheckInterval = setInterval(() => {
+      const bgTimeStr = sessionStorage.getItem('ax_bg_timestamp');
+      if (bgTimeStr && (document.hidden || !document.hasFocus())) {
+        const elapsed = Date.now() - parseInt(bgTimeStr, 10);
+        if (elapsed >= BACKGROUND_LOCK_DELAY_MS) {
+          sessionStorage.setItem('ax_screen_locked', 'true');
+          setIsScreenLocked(true);
+          sessionStorage.removeItem('ax_bg_timestamp');
+        }
+      }
+    }, 1000);
+
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('blur', onWindowBlur);
     window.addEventListener('focus', onWindowFocus);
+    window.addEventListener('pageshow', onWindowFocus);
 
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('blur', onWindowBlur);
       window.removeEventListener('focus', onWindowFocus);
+      window.removeEventListener('pageshow', onWindowFocus);
       if (bgTimer) clearTimeout(bgTimer);
+      clearInterval(bgCheckInterval);
     };
-  }, [currentUser]);
-
-  // Keyboard shortcut: Ctrl+L or Cmd+L to quickly lock terminal
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'l' || e.key === 'L')) {
-        e.preventDefault();
-        if (currentUser) {
-          setIsScreenLocked(prev => {
-            const next = !prev;
-            if (next) {
-              sessionStorage.removeItem('ax_session_unlocked');
-              sessionStorage.setItem('ax_screen_locked', 'true');
-            } else {
-              sessionStorage.setItem('ax_session_unlocked', 'true');
-              sessionStorage.removeItem('ax_screen_locked');
-            }
-            return next;
-          });
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentUser]);
 
   const [orderModalConfig, setOrderModalConfig] = useState({
@@ -400,7 +384,11 @@ export default function App() {
   }, []);
 
   // Fetch Portfolio Summary
-  const fetchPortfolio = useCallback(() => {
+  const fetchPortfolio = useCallback((directData = null) => {
+    if (directData && directData.orders) {
+      setPortfolio(directData);
+      return;
+    }
     safeFetchJson('/api/portfolio')
       .then(res => {
         if (res && res.success && res.data) {
@@ -410,12 +398,9 @@ export default function App() {
       .catch(console.error);
   }, []);
 
-  // Initial Capital check and auto-selecting first stock if available
+  // Auto-selecting first stock if available
   useEffect(() => {
     if (portfolio) {
-      if (portfolio.initialCapital === 0 || portfolio.cashBalance === 0) {
-        setShowInitialFundsModal(true);
-      }
       if (!activeSymbol && portfolio.watchlists?.[0]?.symbols?.length > 0) {
         handleSelectStock(portfolio.watchlists[0].symbols[0]);
       }
@@ -568,19 +553,93 @@ export default function App() {
   };
 
   // Reset Portfolio
-  const handleResetPortfolio = async (capital) => {
-    const res = await fetch('/api/portfolio/reset', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ capital })
-    });
-    const data = await res.json();
-    if (data.success) {
-      setPortfolio(data.data);
-    } else {
-      throw new Error(data.error || 'Failed to reset portfolio');
+  const handleResetPortfolio = async (capital = 0) => {
+    const numCap = Math.max(0, Number(capital) || 0);
+    const freshState = {
+      initialCapital: numCap,
+      cashBalance: numCap,
+      totalHoldingsValue: 0,
+      totalInvested: 0,
+      totalPortfolioValue: numCap,
+      holdingsUnrealizedPnl: 0,
+      positionsUnrealizedPnl: 0,
+      realizedPnl: 0,
+      totalReturn: 0,
+      totalReturnPct: 0,
+      holdings: [],
+      positions: [],
+      orders: [],
+      journal: [],
+      watchlists: [
+        { id: 'default', name: 'Watchlist 1', symbols: [] },
+        { id: 'wl-2', name: 'Watchlist 2', symbols: [] },
+        { id: 'wl-3', name: 'Watchlist 3', symbols: [] },
+        { id: 'wl-4', name: 'Watchlist 4', symbols: [] },
+        { id: 'wl-5', name: 'Watchlist 5', symbols: [] }
+      ],
+      settings: portfolio?.settings || { enableCharges: true, defaultProduct: 'CNC', slippagePct: 0.05 },
+      analytics: { totalTrades: 0, winCount: 0, lossCount: 0, winRate: 0, profitFactor: 0, avgWin: 0, avgLoss: 0, bestTrade: null, sectorBreakdown: [] }
+    };
+    setPortfolio(freshState);
+
+    try {
+      const res = await fetch('/api/portfolio/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ capital: numCap })
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setPortfolio(data.data);
+        return data.data;
+      } else {
+        throw new Error(data.error || 'Failed to reset portfolio');
+      }
+    } catch (err) {
+      console.error('Failed to reset portfolio on server:', err);
     }
   };
+
+  // Start Fresh Account: Purges all older data and opens the initial amount page
+  const handleStartFreshAccount = useCallback(async () => {
+    try {
+      await fetch('/api/portfolio/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ capital: 0 })
+      });
+    } catch (e) {
+      console.error('Reset error:', e);
+    }
+
+    setPortfolio({
+      initialCapital: 0,
+      cashBalance: 0,
+      totalHoldingsValue: 0,
+      totalInvested: 0,
+      totalPortfolioValue: 0,
+      holdingsUnrealizedPnl: 0,
+      positionsUnrealizedPnl: 0,
+      realizedPnl: 0,
+      totalReturn: 0,
+      totalReturnPct: 0,
+      holdings: [],
+      positions: [],
+      orders: [],
+      journal: [],
+      watchlists: [
+        { id: 'default', name: 'Watchlist 1', symbols: [] },
+        { id: 'wl-2', name: 'Watchlist 2', symbols: [] },
+        { id: 'wl-3', name: 'Watchlist 3', symbols: [] },
+        { id: 'wl-4', name: 'Watchlist 4', symbols: [] },
+        { id: 'wl-5', name: 'Watchlist 5', symbols: [] }
+      ],
+      settings: { enableCharges: true, defaultProduct: 'CNC', slippagePct: 0.05 },
+      analytics: { totalTrades: 0, winCount: 0, lossCount: 0, winRate: 0, profitFactor: 0, avgWin: 0, avgLoss: 0, bestTrade: null, sectorBreakdown: [] }
+    });
+
+    setShowInitialFundsModal(true);
+  }, []);
 
   // Update Journal Entry
   const handleUpdateJournal = async (id, updates) => {
@@ -938,7 +997,7 @@ export default function App() {
               currentUser={currentUser}
               portfolio={portfolio}
               onUpdateFunds={handleUpdateFunds}
-              onResetPortfolio={handleResetPortfolio}
+              onResetPortfolio={handleStartFreshAccount}
               onLogout={handleLogout}
               onLockScreen={handleLockScreen}
               beginnerMode={beginnerMode}
@@ -1002,9 +1061,8 @@ export default function App() {
       <InitialFundsModal
         isOpen={showInitialFundsModal}
         onClose={() => setShowInitialFundsModal(false)}
-        onSetCapital={async (capital) => {
-          await handleResetPortfolio(capital);
-        }}
+        onSetCapital={handleResetPortfolio}
+        onSetInitialFunds={handleResetPortfolio}
       />
 
       {/* Interactive Beginner Trading Tips Modal */}

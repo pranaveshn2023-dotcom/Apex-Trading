@@ -84,10 +84,10 @@ export default function ScreenLockModal({ isOpen, onUnlock, currentUser, onLogou
   }, [setupStep, firstPin, triggerUnlockSequence]);
 
   const verifyPin = useCallback((enteredPin) => {
-    const activePin = localStorage.getItem('ax_terminal_pin') || '1234';
+    const activePin = localStorage.getItem('ax_terminal_pin');
 
-    // Correct PIN check (or fallback 1234 / 0000)
-    if (enteredPin === activePin || enteredPin === '1234' || enteredPin === '0000') {
+    // Only accept the user's configured PIN — no backdoors
+    if (activePin && enteredPin === activePin) {
       triggerUnlockSequence();
     } else {
       const nextAttempts = wrongAttempts + 1;
