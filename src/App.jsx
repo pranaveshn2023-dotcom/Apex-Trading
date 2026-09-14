@@ -1112,6 +1112,11 @@ export default function App() {
           handleSelectStock(sym);
           if (activeTab !== 'terminal') setActiveTab('terminal');
         }}
+        onAddToWatchlist={(sym) => {
+          const defaultWlId = portfolio?.watchlists?.[0]?.id || 'default';
+          handleAddToWatchlist(defaultWlId, sym);
+        }}
+        watchlistSymbols={portfolio?.watchlists?.[0]?.symbols || []}
       />
 
       {/* Initial Starting Funds Setup Modal */}

@@ -84,20 +84,36 @@ export default function KiteMarketwatch({
       userSelect: 'none'
     }}>
       {/* Quick Search inside Marketwatch */}
-      <div style={{ padding: '10px 14px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Search size={14} color="#64748b" />
+      <div 
+        onClick={() => { if (symbolsToRender.length === 0) onOpenSearch(); }}
+        style={{ padding: '10px 14px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '8px', cursor: symbolsToRender.length === 0 ? 'pointer' : 'default' }}
+      >
+        <Search size={14} color="#059669" onClick={onOpenSearch} style={{ cursor: 'pointer' }} />
         <input
           type="text"
           value={filterText}
           onChange={(e) => setFilterText(e.target.value)}
-          placeholder="Filter watchlist..."
+          onClick={(e) => {
+            if (activeWatchlist?.symbols?.length === 0) {
+              e.preventDefault();
+              onOpenSearch();
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (!symbolsToRender.length || activeWatchlist?.symbols?.length === 0)) {
+              e.preventDefault();
+              onOpenSearch();
+            }
+          }}
+          placeholder={activeWatchlist?.symbols?.length === 0 ? "Search & add stocks (Ctrl+K)..." : "Filter watchlist or Ctrl+K..."}
           style={{
             background: 'transparent',
             border: 'none',
             color: '#0f172a',
             fontSize: '0.8rem',
             width: '100%',
-            outline: 'none'
+            outline: 'none',
+            cursor: activeWatchlist?.symbols?.length === 0 ? 'pointer' : 'text'
           }}
         />
         <button

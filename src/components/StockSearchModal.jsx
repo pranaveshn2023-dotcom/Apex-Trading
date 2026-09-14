@@ -50,7 +50,13 @@ function filterLocalMatches(q) {
   return [...exact, ...starts, ...contains].slice(0, 35);
 }
 
-export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
+export default function StockSearchModal({ 
+  isOpen, 
+  onClose, 
+  onSelectStock,
+  onAddToWatchlist,
+  watchlistSymbols = []
+}) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(() => MASTER_INSTRUMENTS.slice(0, 25));
   const [loading, setLoading] = useState(false);
@@ -87,16 +93,27 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
       const res = await response.json();
       if (currentSeq !== searchSeqRef.current) return;
 
-      if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-        setResults(res.data);
+      if (res && res.success && Array.isArray(res.data)) {
+        if (res.data.length > 0) {
+          const local = filterLocalMatches(trimmed);
+          const seen = new Set(res.data.map(d => d.symbol));
+          const merged = [...res.data];
+          for (const l of local) {
+            if (!seen.has(l.symbol)) {
+              merged.push(l);
+              seen.add(l.symbol);
+            }
+          }
+          setResults(merged);
+        } else {
+          setResults(filterLocalMatches(trimmed));
+        }
       } else {
-        const local = filterLocalMatches(trimmed);
-        if (local.length > 0) setResults(local);
+        setResults(filterLocalMatches(trimmed));
       }
     } catch (err) {
       if (currentSeq === searchSeqRef.current) {
-        const local = filterLocalMatches(trimmed);
-        if (local.length > 0) setResults(local);
+        setResults(filterLocalMatches(trimmed));
       }
     } finally {
       if (currentSeq === searchSeqRef.current) {
@@ -107,6 +124,7 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
 
   const handleInputChange = (val) => {
     setQuery(val);
+    setCategoryFilter('ALL');
     const trimmed = val.trim();
 
     if (!trimmed) {
@@ -116,17 +134,14 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
       return;
     }
 
-    // Instant local matches so user sees immediate results on keypress
+    // Always update results with local match immediately (0ms latency!)
     const immediate = filterLocalMatches(trimmed);
-    if (immediate.length > 0) {
-      setResults(immediate);
-    }
+    setResults(immediate);
 
-    // Debounced fetch for live online / full catalog search
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
       performServerSearch(trimmed);
-    }, 180);
+    }, 150);
   };
 
   if (!isOpen) return null;
@@ -405,12 +420,45 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
                     </div>
                   </div>
 
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div className="font-mono" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>
-                      {stock.symbol}
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: '#059669', marginTop: '2px', fontWeight: 700 }}>
-                      Click to Chart →
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                    {onAddToWatchlist && (
+                      watchlistSymbols.includes(stock.symbol) ? (
+                        <span style={{ fontSize: '0.7rem', color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
+                          Added ✓
+                        </span>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAddToWatchlist(stock.symbol);
+                          }}
+                          style={{
+                            background: '#f8fafc',
+                            border: '1px solid #cbd5e1',
+                            color: '#059669',
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = '#ecfdf5'; e.currentTarget.style.borderColor = '#10b981'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                          title="Add to Watchlist"
+                        >
+                          + Watchlist
+                        </button>
+                      )
+                    )}
+
+                    <div style={{ textAlign: 'right' }}>
+                      <div className="font-mono" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>
+                        {stock.symbol}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#059669', marginTop: '2px', fontWeight: 700 }}>
+                        Click to Chart →
+                      </div>
                     </div>
                   </div>
                 </div>
