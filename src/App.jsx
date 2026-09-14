@@ -187,7 +187,7 @@ export default function App() {
           setCurrentUser(null);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // -------------------------------------------------------------
@@ -203,7 +203,7 @@ export default function App() {
     setCurrentUser(user);
     try {
       localStorage.setItem('ax_current_user', JSON.stringify(user));
-    } catch {}
+    } catch { }
     // Require PIN every time user logs into the app
     sessionStorage.setItem('ax_screen_locked', 'true');
     setIsScreenLocked(true);
@@ -212,7 +212,7 @@ export default function App() {
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-    } catch {}
+    } catch { }
     localStorage.removeItem('ax_current_user');
     localStorage.removeItem('ax_auth_token');
     sessionStorage.removeItem('ax_screen_locked');
@@ -244,12 +244,12 @@ export default function App() {
     }
   }, [isScreenLocked, currentUser, portfolio]);
 
-  // 2-Minute Background Inactivity Guard
+  // 5-Minute Background Inactivity Guard
   useEffect(() => {
     if (!currentUser) return;
 
     let bgTimer = null;
-    const BACKGROUND_LOCK_DELAY_MS = 120000; // 2 minutes (120 seconds)
+    const BACKGROUND_LOCK_DELAY_MS = 300000; // 5 minutes (300 seconds)
 
     const handleEnterBackground = () => {
       // Record when the app was sent to the background (tab hidden or window blurred/minimized)
@@ -260,14 +260,14 @@ export default function App() {
 
       if (bgTimer) clearTimeout(bgTimer);
       bgTimer = setTimeout(() => {
-        // App kept in background for 2 minutes -> trigger PIN screen lock
+        // App kept in background for 5 minutes -> trigger PIN screen lock
         sessionStorage.setItem('ax_screen_locked', 'true');
         setIsScreenLocked(true);
       }, BACKGROUND_LOCK_DELAY_MS);
     };
 
     const handleReturnForeground = () => {
-      // Check if 2 minutes elapsed while in background
+      // Check if 5 minutes elapsed while in background
       const bgTimeStr = sessionStorage.getItem('ax_bg_timestamp');
       if (bgTimeStr) {
         const elapsed = Date.now() - parseInt(bgTimeStr, 10);
@@ -485,7 +485,7 @@ export default function App() {
     setActiveSymbol(symbol);
     try {
       localStorage.setItem('ax_active_symbol', symbol);
-    } catch {}
+    } catch { }
     fetchQuote(symbol);
     fetchCandles(symbol, timeframe);
     setActiveTab('terminal');
@@ -596,7 +596,7 @@ export default function App() {
     try {
       const userKey = currentUser?.email || currentUser?.id || 'default';
       localStorage.setItem('ax_funds_configured_' + userKey, 'true');
-    } catch {}
+    } catch { }
 
     try {
       const res = await fetch('/api/portfolio/reset', {
@@ -621,7 +621,7 @@ export default function App() {
     try {
       const userKey = currentUser?.email || currentUser?.id || 'default';
       localStorage.removeItem('ax_funds_configured_' + userKey);
-    } catch {}
+    } catch { }
 
     try {
       await fetch('/api/portfolio/reset', {
@@ -704,7 +704,7 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
-      
+
       {/* Apex Trading Top Navigation */}
       <KiteNavbar
         portfolio={portfolio}
@@ -777,7 +777,7 @@ export default function App() {
           overflowY: 'auto',
           minWidth: 0
         }}>
-          
+
           {/* TAB 1: TRADING TERMINAL */}
           {activeTab === 'terminal' && (
             !activeSymbol ? (
