@@ -1,5 +1,5 @@
 // api/watchlists/index.js — POST /api/watchlists/add and /api/watchlists/remove
-import { loadUserPortfolio, upsertWatchlist, initD1Tables } from '../_d1.js';
+import { loadUserPortfolio, upsertWatchlist, initD1Tables } from './_d1.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();

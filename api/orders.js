@@ -6,8 +6,8 @@ import {
   upsertPosition,
   upsertHolding,
   initD1Tables
-} from '../_d1.js';
-import { getQuote } from '../../server/services/marketData.js';
+} from './_d1.js';
+import { getQuote } from '../server/services/marketData.js';
 
 function calculateCharges(product, action, price, qty) {
   const tradeValue = price * qty;
