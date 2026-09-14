@@ -38,7 +38,10 @@ export default function KiteNavbar({
   onOpenAuth,
   onLockScreen,
   onInstallApp,
-  isAppInstalled = false
+  isAppInstalled = false,
+  isMarketwatchCollapsed = false,
+  onToggleCollapseMarketwatch,
+  watchlistCount = 0
 }) {
   const isMarketOpen = isIndianMarketOpen();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -247,12 +250,37 @@ export default function KiteNavbar({
                 </span>
               </div>
             )}
+            {/* Desktop Marketwatch Toggle Button */}
+            {onToggleCollapseMarketwatch && (
+              <button
+                onClick={onToggleCollapseMarketwatch}
+                className="hide-under-1024"
+                style={{
+                  background: isMarketwatchCollapsed ? '#ecfdf5' : '#f8fafc',
+                  border: isMarketwatchCollapsed ? '1px solid #a7f3d0' : '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  color: isMarketwatchCollapsed ? '#047857' : '#475569',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  transition: 'all 0.15s ease'
+                }}
+                title={isMarketwatchCollapsed ? "Show Marketwatch Sidebar" : "Hide Marketwatch (Expand Chart)"}
+              >
+                <List size={13} color={isMarketwatchCollapsed ? "#047857" : "#64748b"} />
+                <span>{isMarketwatchCollapsed ? "Watchlist" : "Hide"}</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* 2. CENTER: All 8 Navigation Tabs on Desktop (Hidden on mobile & vertical screens in favor of Bottom Nav) */}
         <div 
-          className="hide-vertical nav-tabs-scroll" 
+          className="nav-tabs-desktop hide-vertical nav-tabs-scroll" 
           style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -368,6 +396,44 @@ export default function KiteNavbar({
             >
               <Smartphone size={13} color="#059669" />
               <span className="hide-mobile">Install App</span>
+            </button>
+          )}
+
+          {/* Mobile & Tablet Watchlist Drawer Trigger */}
+          {onToggleWatchlist && (
+            <button
+              onClick={onToggleWatchlist}
+              className="show-under-1024"
+              style={{
+                display: 'none',
+                alignItems: 'center',
+                gap: '5px',
+                background: '#ecfdf5',
+                border: '1px solid #a7f3d0',
+                borderRadius: '8px',
+                padding: '6px 10px',
+                color: '#047857',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                flexShrink: 0
+              }}
+              title="Open Marketwatch Watchlist"
+            >
+              <List size={15} color="#059669" />
+              <span className="hide-mobile">Watchlist</span>
+              {watchlistCount > 0 && (
+                <span style={{
+                  background: '#059669',
+                  color: '#ffffff',
+                  borderRadius: '10px',
+                  fontSize: '0.62rem',
+                  padding: '1px 5px',
+                  fontWeight: 800
+                }}>
+                  {watchlistCount}
+                </span>
+              )}
             </button>
           )}
 

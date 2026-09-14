@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, Plus, Sparkles, TrendingUp, ArrowRight } from 'lucide-react';
+import { Search, Plus, Sparkles, TrendingUp, ArrowRight, List, X } from 'lucide-react';
 import KiteNavbar from './components/KiteNavbar';
 import KiteMarketwatch from './components/KiteMarketwatch';
 import KiteOrderModal from './components/KiteOrderModal';
@@ -102,6 +102,7 @@ export default function App() {
   // Responsive breakpoints
   const { width: viewportWidth, isMobile, isTablet, isCompact, isVertical } = useViewport();
   const [showMobileWatchlist, setShowMobileWatchlist] = useState(false);
+  const [isMarketwatchCollapsed, setIsMarketwatchCollapsed] = useState(false);
 
   // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -776,18 +777,22 @@ export default function App() {
         onLockScreen={handleLockScreen}
         onInstallApp={handleInstallPwa}
         isAppInstalled={isPwaInstalled}
+        isMarketwatchCollapsed={isMarketwatchCollapsed}
+        onToggleCollapseMarketwatch={() => setIsMarketwatchCollapsed(p => !p)}
+        watchlistCount={portfolio?.watchlists?.[0]?.symbols?.length || 0}
       />
 
       {/* Main Body with Responsive Adaptive Split Layout */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: (isMobile || isTablet) ? '1fr' : '300px 1fr',
+        gridTemplateColumns: (isMobile || isTablet) ? '1fr' : (isMarketwatchCollapsed ? '0px 1fr' : '320px 1fr'),
         flex: 1,
-        minHeight: isMobile ? 'auto' : 'calc(100vh - 62px)'
+        minHeight: isMobile ? 'auto' : 'calc(100vh - 62px)',
+        transition: 'grid-template-columns 0.2s ease'
       }}>
 
         {/* Left Column: Marketwatch (Desktop sidebar on screens >= 1024px) */}
-        {!(isMobile || isTablet) && (
+        {!(isMobile || isTablet) && !isMarketwatchCollapsed && (
           <aside style={{ borderRight: '1px solid #e2e8f0', background: '#ffffff', height: 'calc(100vh - 56px)', position: 'sticky', top: '56px', overflowY: 'auto' }}>
             <KiteMarketwatch
               watchlists={portfolio?.watchlists}
@@ -807,20 +812,56 @@ export default function App() {
         {/* Mobile & Tablet Watchlist Slide-over Drawer */}
         {(isMobile || isTablet) && showMobileWatchlist && (
           <div className="mobile-drawer-overlay" onClick={() => setShowMobileWatchlist(false)}>
-            <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
-              <KiteMarketwatch
-                watchlists={portfolio?.watchlists}
-                activeSymbol={activeSymbol}
-                onSelectSymbol={(sym) => {
-                  handleSelectStock(sym);
-                  setShowMobileWatchlist(false);
-                  if (activeTab !== 'terminal') setActiveTab('terminal');
-                }}
-                onOpenOrderModal={handleOpenOrderModal}
-                onRemoveSymbol={handleRemoveFromWatchlist}
-                onAddToWatchlist={handleAddToWatchlist}
-                onOpenSearch={handleOpenSearch}
-              />
+            <div className="mobile-drawer" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column' }}>
+              {/* Drawer Header */}
+              <div style={{
+                padding: '12px 14px',
+                borderBottom: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: '#f8fafc',
+                flexShrink: 0
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '0.85rem', color: '#0f172a' }}>
+                  <List size={16} color="#059669" />
+                  <span>MARKETWATCH</span>
+                </div>
+                <button
+                  onClick={() => setShowMobileWatchlist(false)}
+                  style={{
+                    background: '#e2e8f0',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#475569'
+                  }}
+                  title="Close Watchlist"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                <KiteMarketwatch
+                  watchlists={portfolio?.watchlists}
+                  activeSymbol={activeSymbol}
+                  onSelectSymbol={(sym) => {
+                    handleSelectStock(sym);
+                    setShowMobileWatchlist(false);
+                    if (activeTab !== 'terminal') setActiveTab('terminal');
+                  }}
+                  onOpenOrderModal={handleOpenOrderModal}
+                  onRemoveSymbol={handleRemoveFromWatchlist}
+                  onAddToWatchlist={handleAddToWatchlist}
+                  onOpenSearch={handleOpenSearch}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -1015,6 +1056,40 @@ export default function App() {
                         }}
                       />
                     </div>
+                  </div>
+                )}
+
+                {/* Mobile Quick Trade Sticky Bar (Zerodha Kite Mobile Style) */}
+                {(isMobile || isCompact) && currentQuote && (
+                  <div style={{
+                    position: 'fixed',
+                    bottom: isVertical ? '54px' : '0px',
+                    left: 0,
+                    right: 0,
+                    zIndex: 130,
+                    background: 'rgba(255, 255, 255, 0.96)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    borderTop: '1px solid #e2e8f0',
+                    padding: '8px 14px',
+                    display: 'flex',
+                    gap: '10px',
+                    boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.08)'
+                  }}>
+                    <button
+                      onClick={() => handleOpenOrderModal(currentQuote, 'BUY')}
+                      className="btn-buy"
+                      style={{ flex: 1, padding: '11px 0', fontSize: '0.88rem', fontWeight: 800, borderRadius: '8px' }}
+                    >
+                      BUY (B)
+                    </button>
+                    <button
+                      onClick={() => handleOpenOrderModal(currentQuote, 'SELL')}
+                      className="btn-sell"
+                      style={{ flex: 1, padding: '11px 0', fontSize: '0.88rem', fontWeight: 800, borderRadius: '8px' }}
+                    >
+                      SELL (S)
+                    </button>
                   </div>
                 )}
               </div>

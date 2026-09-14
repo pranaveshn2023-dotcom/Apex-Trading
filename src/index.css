@@ -193,6 +193,9 @@ button, input, select, textarea {
     min-width: auto;
     padding: 6px 8px !important;
   }
+  .navbar-search-btn kbd {
+    display: none !important;
+  }
   .navbar-search-placeholder {
     display: none;
   }
@@ -338,6 +341,22 @@ button, input, select, textarea {
   }
 }
 
+/* Screens under 1280px (Laptops & Compact Desktops) */
+@media (max-width: 1280px) {
+  .hide-under-1280 {
+    display: none !important;
+  }
+  .nav-tab span {
+    display: none;
+  }
+  .nav-tab {
+    padding: 6px 9px !important;
+  }
+  .navbar-search-btn {
+    min-width: 160px;
+  }
+}
+
 /* Screens under 1200px */
 @media (max-width: 1200px) {
   .hide-under-1200 {
@@ -352,6 +371,12 @@ button, input, select, textarea {
   }
   .hide-under-1024 {
     display: none !important;
+  }
+  .nav-tabs-desktop {
+    display: none !important;
+  }
+  .mobile-bottom-nav {
+    display: grid !important;
   }
 }
 
