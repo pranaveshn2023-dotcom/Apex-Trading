@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Plus, Sparkles, TrendingUp, ArrowRight } from 'lucide-react';
 import KiteNavbar from './components/KiteNavbar';
 import KiteMarketwatch from './components/KiteMarketwatch';
