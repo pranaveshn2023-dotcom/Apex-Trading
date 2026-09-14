@@ -3,38 +3,14 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "functions": {
-    "api/**": {
+    "api/index.js": {
       "maxDuration": 15,
       "includeFiles": "server/data/**"
     }
   },
   "rewrites": [
-    { "source": "/api/market/indices", "destination": "/api/market/indices" },
-    { "source": "/api/market/quote/:symbol", "destination": "/api/market/quote?symbol=:symbol" },
-    { "source": "/api/market/quote", "destination": "/api/market/quote" },
-    { "source": "/api/market/history/:symbol", "destination": "/api/market/history?symbol=:symbol" },
-    { "source": "/api/market/history", "destination": "/api/market/history" },
-    { "source": "/api/market/search", "destination": "/api/market/search" },
-    { "source": "/api/market/stocks", "destination": "/api/market/stocks" },
-    { "source": "/api/market/batch-quotes", "destination": "/api/market/batch-quotes" },
-    { "source": "/api/portfolio", "destination": "/api/portfolio/index" },
-    { "source": "/api/portfolio/update-funds", "destination": "/api/portfolio/funds" },
-    { "source": "/api/portfolio/reset", "destination": "/api/portfolio/reset" },
-    { "source": "/api/orders/calculate-charges", "destination": "/api/orders/calculate-charges" },
-    { "source": "/api/orders/:id/cancel", "destination": "/api/orders/cancel?id=:id" },
-    { "source": "/api/orders/cancel", "destination": "/api/orders/cancel" },
-    { "source": "/api/orders", "destination": "/api/orders" },
-    { "source": "/api/positions/:id/close", "destination": "/api/positions/close?id=:id" },
-    { "source": "/api/positions/close", "destination": "/api/positions/close" },
-    { "source": "/api/watchlists/add", "destination": "/api/watchlists" },
-    { "source": "/api/watchlists/remove", "destination": "/api/watchlists" },
-    { "source": "/api/journal/:id", "destination": "/api/journal?id=:id" },
-    { "source": "/api/journal", "destination": "/api/journal" },
-    { "source": "/api/auth/google-oauth", "destination": "/api/auth/google" },
-    { "source": "/api/auth/google", "destination": "/api/auth/google" },
-    { "source": "/api/auth/config", "destination": "/api/auth/config" },
-    { "source": "/api/auth/me", "destination": "/api/auth/me" },
-    { "source": "/api/auth/logout", "destination": "/api/auth/logout" },
+    { "source": "/api", "destination": "/api/index.js" },
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [

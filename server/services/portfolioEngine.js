@@ -8,9 +8,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DATA_DIR = path.join(__dirname, '../data');
-const PORTFOLIO_FILE = path.join(DATA_DIR, 'portfolio.json');
+const PORTFOLIO_FILE = process.env.VERCEL
+  ? path.join('/tmp', 'portfolio.json')
+  : path.join(DATA_DIR, 'portfolio.json');
 
-const INITIAL_CAPITAL = 0; // Starts fresh at ₹0
+const INITIAL_CAPITAL = 1000000; // Starts with ₹10,00,000 demo capital
 
 let state = {
   initialCapital: INITIAL_CAPITAL,
@@ -26,7 +28,7 @@ let state = {
   orders: [], // History of all orders { id, symbol, name, type: 'BUY'|'SELL', orderType: 'MARKET'|'LIMIT'|'SL', product, qty, price, executedPrice, status: 'EXECUTED'|'PENDING'|'CANCELLED'|'REJECTED', charges, timestamp, thesis }
   journal: [], // In-depth trade journal entries { id, orderId, symbol, entryDate, exitDate, tradeType, entryPrice, exitPrice, qty, pnl, pnlPct, thesis, strategy, rating, lessons, tags }
   watchlists: [
-    { id: 'default', name: 'Watchlist 1', symbols: [] },
+    { id: 'default', name: 'Watchlist 1', symbols: ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS', 'ICICIBANK.NS', 'TATAMOTORS.NS'] },
     { id: 'wl-2', name: 'Watchlist 2', symbols: [] },
     { id: 'wl-3', name: 'Watchlist 3', symbols: [] },
     { id: 'wl-4', name: 'Watchlist 4', symbols: [] },
@@ -36,12 +38,19 @@ let state = {
 
 // Load saved portfolio from disk and sync with Cloudflare D1
 export async function initPortfolio() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (fs.existsSync(PORTFOLIO_FILE)) {
+  try {
+    if (!fs.existsSync(DATA_DIR) && !process.env.VERCEL) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  } catch {}
+
+  const sourceFile = fs.existsSync(PORTFOLIO_FILE)
+    ? PORTFOLIO_FILE
+    : path.join(DATA_DIR, 'portfolio.json');
+
+  if (fs.existsSync(sourceFile)) {
     try {
-      const data = fs.readFileSync(PORTFOLIO_FILE, 'utf-8');
+      const data = fs.readFileSync(sourceFile, 'utf-8');
       state = { ...state, ...JSON.parse(data) };
       console.log('Portfolio state loaded successfully from disk.');
     } catch (err) {
