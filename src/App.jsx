@@ -163,6 +163,18 @@ export default function App() {
 
   // Modals & Auth
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchInitialQuery, setSearchInitialQuery] = useState('');
+
+  const handleOpenSearch = useCallback((initialQuery = '') => {
+    setSearchInitialQuery(typeof initialQuery === 'string' ? initialQuery : '');
+    setIsSearchOpen(true);
+  }, []);
+
+  const handleCloseSearch = useCallback(() => {
+    setIsSearchOpen(false);
+    setSearchInitialQuery('');
+  }, []);
+
   const [showInitialFundsModal, setShowInitialFundsModal] = useState(false);
   const [isTipsOpen, setIsTipsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -509,12 +521,12 @@ export default function App() {
       }
       if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
         e.preventDefault();
-        setIsSearchOpen(true);
+        handleOpenSearch();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleOpenSearch]);
 
   // Handle Select Stock
   const handleSelectStock = (symbol) => {
@@ -747,7 +759,7 @@ export default function App() {
         indices={indices}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenSearch={handleOpenSearch}
         onOpenFunds={() => setActiveTab('funds')}
         onSelectStock={handleSelectStock}
         isMobile={isMobile}
@@ -782,7 +794,7 @@ export default function App() {
               }}
               onOpenOrderModal={handleOpenOrderModal}
               onRemoveSymbol={handleRemoveFromWatchlist}
-              onOpenSearch={() => setIsSearchOpen(true)}
+              onOpenSearch={handleOpenSearch}
             />
           </aside>
         )}
@@ -801,7 +813,7 @@ export default function App() {
                 }}
                 onOpenOrderModal={handleOpenOrderModal}
                 onRemoveSymbol={handleRemoveFromWatchlist}
-                onOpenSearch={() => setIsSearchOpen(true)}
+                onOpenSearch={handleOpenSearch}
               />
             </div>
           </div>
@@ -829,7 +841,7 @@ export default function App() {
                 </p>
 
                 <button
-                  onClick={() => setIsSearchOpen(true)}
+                  onClick={() => handleOpenSearch()}
                   className="btn-primary"
                   style={{ padding: '12px 26px', fontSize: '0.95rem', margin: '0 auto 28px auto', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                 >
@@ -1107,7 +1119,8 @@ export default function App() {
       {/* Global Universal Stock Search Modal (Ctrl+K) */}
       <StockSearchModal
         isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
+        onClose={handleCloseSearch}
+        initialQuery={searchInitialQuery}
         onSelectStock={(sym) => {
           handleSelectStock(sym);
           if (activeTab !== 'terminal') setActiveTab('terminal');

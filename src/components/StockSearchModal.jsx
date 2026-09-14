@@ -55,7 +55,8 @@ export default function StockSearchModal({
   onClose, 
   onSelectStock,
   onAddToWatchlist,
-  watchlistSymbols = []
+  watchlistSymbols = [],
+  initialQuery = ''
 }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(() => MASTER_INSTRUMENTS.slice(0, 25));
@@ -64,26 +65,49 @@ export default function StockSearchModal({
   const inputRef = useRef(null);
   const searchSeqRef = useRef(0);
   const debounceTimerRef = useRef(null);
+  const prevIsOpenRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
+  // Only reset query and focus input when modal transitions from CLOSED to OPEN
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-      setQuery('');
+    if (isOpen && !prevIsOpenRef.current) {
+      const q = typeof initialQuery === 'string' ? initialQuery : '';
+      setQuery(q);
       setCategoryFilter('ALL');
-      setResults(MASTER_INSTRUMENTS.slice(0, 25));
-      const handleKeyDown = (e) => {
-        if (e.key === 'Escape') {
-          onClose();
+
+      if (q.trim()) {
+        const immediate = filterLocalMatches(q.trim());
+        setResults(immediate);
+        performServerSearch(q.trim());
+      } else {
+        setResults(MASTER_INSTRUMENTS.slice(0, 25));
+      }
+
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          const len = inputRef.current.value.length;
+          inputRef.current.setSelectionRange(len, len);
         }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    } else {
-      setQuery('');
-      setResults([]);
+      }, 50);
+    } else if (!isOpen && prevIsOpenRef.current) {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     }
-  }, [isOpen, onClose]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  // Handle ESC key without resetting input or re-running on parent re-renders
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onCloseRef.current?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   const performServerSearch = async (trimmed) => {
     const currentSeq = ++searchSeqRef.current;
@@ -124,7 +148,6 @@ export default function StockSearchModal({
 
   const handleInputChange = (val) => {
     setQuery(val);
-    setCategoryFilter('ALL');
     const trimmed = val.trim();
 
     if (!trimmed) {
@@ -184,9 +207,14 @@ export default function StockSearchModal({
             value={query}
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && directSymbol) {
-                onSelectStock(directSymbol);
-                onClose();
+              if (e.key === 'Enter') {
+                if (filteredResults.length > 0 && filteredResults[0]?.symbol) {
+                  onSelectStock(filteredResults[0].symbol);
+                  onClose();
+                } else if (directSymbol) {
+                  onSelectStock(directSymbol);
+                  onClose();
+                }
               }
             }}
             placeholder="Search ANY stock or index (e.g. Nifty 50, Bank Nifty, Sensex, Reliance, TMPV, Apple, Tesla, S&P 500)..."

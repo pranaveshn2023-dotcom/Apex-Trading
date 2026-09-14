@@ -85,27 +85,33 @@ export default function KiteMarketwatch({
     }}>
       {/* Quick Search inside Marketwatch */}
       <div 
-        onClick={() => { if (symbolsToRender.length === 0) onOpenSearch(); }}
-        style={{ padding: '10px 14px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '8px', cursor: symbolsToRender.length === 0 ? 'pointer' : 'default' }}
+        onClick={() => onOpenSearch()}
+        style={{ 
+          padding: '10px 14px', 
+          borderBottom: '1px solid #e2e8f0', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          cursor: 'pointer',
+          background: '#ffffff',
+          transition: 'background 0.15s ease'
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = '#f8fafc'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = '#ffffff'; }}
       >
-        <Search size={14} color="#059669" onClick={onOpenSearch} style={{ cursor: 'pointer' }} />
+        <Search size={14} color="#059669" />
         <input
           type="text"
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
+          value=""
+          onFocus={() => onOpenSearch()}
           onClick={(e) => {
-            if (activeWatchlist?.symbols?.length === 0) {
-              e.preventDefault();
-              onOpenSearch();
-            }
+            e.stopPropagation();
+            onOpenSearch();
           }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (!symbolsToRender.length || activeWatchlist?.symbols?.length === 0)) {
-              e.preventDefault();
-              onOpenSearch();
-            }
+          onChange={(e) => {
+            onOpenSearch(e.target.value);
           }}
-          placeholder={activeWatchlist?.symbols?.length === 0 ? "Search & add stocks (Ctrl+K)..." : "Filter watchlist or Ctrl+K..."}
+          placeholder="Search & add stocks (Ctrl+K)..."
           style={{
             background: 'transparent',
             border: 'none',
@@ -113,11 +119,14 @@ export default function KiteMarketwatch({
             fontSize: '0.8rem',
             width: '100%',
             outline: 'none',
-            cursor: activeWatchlist?.symbols?.length === 0 ? 'pointer' : 'text'
+            cursor: 'pointer'
           }}
         />
         <button
-          onClick={onOpenSearch}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenSearch();
+          }}
           style={{
             background: 'linear-gradient(135deg, #059669, #10b981)',
             border: 'none',
