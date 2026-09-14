@@ -634,7 +634,9 @@ export default function App() {
         { id: 'wl-2', name: 'Watchlist 2', symbols: [] },
         { id: 'wl-3', name: 'Watchlist 3', symbols: [] },
         { id: 'wl-4', name: 'Watchlist 4', symbols: [] },
-        { id: 'wl-5', name: 'Watchlist 5', symbols: [] }
+        { id: 'wl-5', name: 'Watchlist 5', symbols: [] },
+        { id: 'wl-6', name: 'Watchlist 6', symbols: [] },
+        { id: 'wl-7', name: 'Watchlist 7', symbols: [] }
       ],
       settings: portfolio?.settings || { enableCharges: true, defaultProduct: 'CNC', slippagePct: 0.05 },
       analytics: { totalTrades: 0, winCount: 0, lossCount: 0, winRate: 0, profitFactor: 0, avgWin: 0, avgLoss: 0, bestTrade: null, sectorBreakdown: [] }
@@ -701,7 +703,9 @@ export default function App() {
         { id: 'wl-2', name: 'Watchlist 2', symbols: [] },
         { id: 'wl-3', name: 'Watchlist 3', symbols: [] },
         { id: 'wl-4', name: 'Watchlist 4', symbols: [] },
-        { id: 'wl-5', name: 'Watchlist 5', symbols: [] }
+        { id: 'wl-5', name: 'Watchlist 5', symbols: [] },
+        { id: 'wl-6', name: 'Watchlist 6', symbols: [] },
+        { id: 'wl-7', name: 'Watchlist 7', symbols: [] }
       ],
       settings: { enableCharges: true, defaultProduct: 'CNC', slippagePct: 0.05 },
       analytics: { totalTrades: 0, winCount: 0, lossCount: 0, winRate: 0, profitFactor: 0, avgWin: 0, avgLoss: 0, bestTrade: null, sectorBreakdown: [] }
@@ -794,6 +798,7 @@ export default function App() {
               }}
               onOpenOrderModal={handleOpenOrderModal}
               onRemoveSymbol={handleRemoveFromWatchlist}
+              onAddToWatchlist={handleAddToWatchlist}
               onOpenSearch={handleOpenSearch}
             />
           </aside>
@@ -813,6 +818,7 @@ export default function App() {
                 }}
                 onOpenOrderModal={handleOpenOrderModal}
                 onRemoveSymbol={handleRemoveFromWatchlist}
+                onAddToWatchlist={handleAddToWatchlist}
                 onOpenSearch={handleOpenSearch}
               />
             </div>

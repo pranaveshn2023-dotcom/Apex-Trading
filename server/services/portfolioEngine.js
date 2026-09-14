@@ -32,7 +32,9 @@ let state = {
     { id: 'wl-2', name: 'Watchlist 2', symbols: [] },
     { id: 'wl-3', name: 'Watchlist 3', symbols: [] },
     { id: 'wl-4', name: 'Watchlist 4', symbols: [] },
-    { id: 'wl-5', name: 'Watchlist 5', symbols: [] }
+    { id: 'wl-5', name: 'Watchlist 5', symbols: [] },
+    { id: 'wl-6', name: 'Watchlist 6', symbols: [] },
+    { id: 'wl-7', name: 'Watchlist 7', symbols: [] }
   ]
 };
 
@@ -741,7 +743,9 @@ export async function resetPortfolio(customCapital = 0) {
     { id: 'wl-2', name: 'Watchlist 2', symbols: [] },
     { id: 'wl-3', name: 'Watchlist 3', symbols: [] },
     { id: 'wl-4', name: 'Watchlist 4', symbols: [] },
-    { id: 'wl-5', name: 'Watchlist 5', symbols: [] }
+    { id: 'wl-5', name: 'Watchlist 5', symbols: [] },
+    { id: 'wl-6', name: 'Watchlist 6', symbols: [] },
+    { id: 'wl-7', name: 'Watchlist 7', symbols: [] }
   ];
   savePortfolio();
   return await getPortfolioSummary();
