@@ -1,13 +1,17 @@
-// api/watchlists/index.js — POST /api/watchlists/add and /api/watchlists/remove
+// api/watchlists.js — POST /api/watchlists/add and /api/watchlists/remove
 import { loadUserPortfolio, upsertWatchlist, initD1Tables } from './_d1.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
+
   try {
     const userId = req.headers['x-user-id'] || 'default';
     await initD1Tables();
-    const { watchlistId, symbol, action = 'add' } = req.body;
+    const { watchlistId, symbol } = req.body || {};
+    const isRemove = (req.url && req.url.includes('/remove')) || req.body?.action === 'remove';
+    const action = isRemove ? 'remove' : (req.body?.action || 'add');
+
     if (!watchlistId || !symbol) return res.status(400).json({ success: false, error: 'watchlistId and symbol required' });
 
     const portfolio = await loadUserPortfolio(userId);
