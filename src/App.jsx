@@ -471,7 +471,13 @@ export default function App() {
   // Global Keyboard Shortcuts (Ctrl+K or /)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA')) {
+      const isK = e.key === 'k' || e.key === 'K' || e.code === 'KeyK';
+      if ((e.ctrlKey || e.metaKey) && isK) {
+        e.preventDefault();
+        setIsSearchOpen(prev => !prev);
+        return;
+      }
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
         e.preventDefault();
         setIsSearchOpen(true);
       }

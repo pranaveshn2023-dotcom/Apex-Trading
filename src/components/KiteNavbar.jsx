@@ -371,24 +371,43 @@ export default function KiteNavbar({
             </button>
           )}
 
-          {/* Universal Search Button */}
+          {/* Universal Search Button - Enlarged Desktop Bar */}
           <button
             onClick={onOpenSearch}
-            className="btn-ghost"
+            className="navbar-search-btn"
             style={{ 
-              padding: '5px 8px', 
-              fontSize: '0.75rem', 
+              padding: '6px 12px', 
+              fontSize: '0.8rem', 
               background: '#f8fafc', 
-              borderColor: '#e2e8f0', 
+              border: '1px solid #cbd5e1', 
+              borderRadius: '8px', 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '5px' 
+              justifyContent: 'space-between',
+              gap: '10px', 
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+              transition: 'all 0.15s ease'
             }}
             title="Search Any Stock or Index (Ctrl+K)"
           >
-            <Search size={13} color="#059669" />
-            <span className="hide-mobile" style={{ color: '#334155' }}>Search</span>
-            <span className="hide-mobile" style={{ fontSize: '0.62rem', background: '#f1f5f9', padding: '1px 3px', borderRadius: '3px', color: '#64748b' }}>/</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Search size={14} color="#059669" />
+              <span className="navbar-search-placeholder" style={{ color: '#64748b', fontWeight: 500 }}>Search stocks, indices...</span>
+            </div>
+            <kbd style={{ 
+              fontSize: '0.66rem', 
+              background: '#ffffff', 
+              padding: '2px 6px', 
+              borderRadius: '4px', 
+              color: '#475569', 
+              fontWeight: 700, 
+              border: '1px solid #cbd5e1',
+              fontFamily: 'monospace',
+              boxShadow: '0 1px 1px rgba(0,0,0,0.05)'
+            }}>
+              Ctrl+K
+            </kbd>
           </button>
 
           {/* Margin Badge (Links to Profile & Funds) */}
@@ -416,31 +435,33 @@ export default function KiteNavbar({
             <Plus size={11} color="#059669" />
           </div>
 
-          {/* User Account Profile Pill */}
+          {/* User Account Profile Pill (Avatar Only) */}
           {currentUser ? (
             <div
               onClick={() => setActiveTab('profile')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '4px 10px',
+                justifyContent: 'center',
+                padding: '2px',
                 background: activeTab === 'profile' ? '#ecfdf5' : '#f8fafc',
-                border: activeTab === 'profile' ? '1px solid #10b981' : '1px solid #e2e8f0',
-                borderRadius: '8px',
+                border: activeTab === 'profile' ? '2px solid #10b981' : '1.5px solid #cbd5e1',
+                borderRadius: '50%',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 flexShrink: 0
               }}
-              title="Open Profile & Account Hub"
+              title={`Account: ${currentUser.name || 'User Profile'}`}
             >
-              <div style={{ width: '24px', height: '24px', borderRadius: '50%', overflow: 'hidden', border: '1.5px solid #10b981', flexShrink: 0 }}>
-                <img src={currentUser.picture} alt={currentUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
+                {currentUser.picture ? (
+                  <img src={currentUser.picture} alt={currentUser.name || 'Profile'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', background: '#059669', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
+                    {(currentUser.name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
               </div>
-
-              <span className="hide-mobile" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap' }}>
-                {currentUser.name}
-              </span>
             </div>
           ) : (
             <button

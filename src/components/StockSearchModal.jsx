@@ -12,11 +12,18 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
       handleSearch('NIFTY');
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
     } else {
       setQuery('');
       setResults([]);
     }
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   const handleSearch = async (q) => {
     if (!q || q.trim().length === 0) {

@@ -175,6 +175,29 @@ button, input, select, textarea {
   border-color: #a7f3d0;
 }
 
+.navbar-search-btn {
+  min-width: 230px;
+}
+.navbar-search-btn:hover {
+  border-color: #10b981 !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12) !important;
+}
+@media (max-width: 1024px) {
+  .navbar-search-btn {
+    min-width: 170px;
+  }
+}
+@media (max-width: 768px) {
+  .navbar-search-btn {
+    min-width: auto;
+    padding: 6px 8px !important;
+  }
+  .navbar-search-placeholder {
+    display: none;
+  }
+}
+
 /* Tab Navigation */
 .nav-tab {
   background: transparent;
