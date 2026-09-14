@@ -194,7 +194,7 @@ export default function App() {
   // PIN SECURITY ARCHITECTURE:
   // 1. Mandatory pass key / PIN required on every page refresh / load
   // 2. Active session is kept unlocked during active usage
-  // 3. 25 seconds of background inactivity locks terminal immediately
+  // 3. 2 minutes of background inactivity locks terminal immediately
   // 4. Removed Ctrl+L shortcut to avoid intercepting browser address bar
   // -------------------------------------------------------------
   const [isScreenLocked, setIsScreenLocked] = useState(true);
@@ -233,12 +233,23 @@ export default function App() {
     sessionStorage.removeItem('ax_bg_timestamp');
   }, []);
 
-  // 25-Second Background Inactivity Guard
+  // Prompt user to add funds on first visit if balance is 0 and unconfigured
+  useEffect(() => {
+    if (!isScreenLocked && currentUser && portfolio) {
+      const userKey = currentUser.email || currentUser.id || 'default';
+      const isConfigured = localStorage.getItem('ax_funds_configured_' + userKey);
+      if (!isConfigured && (portfolio.initialCapital === 0 || !portfolio.initialCapital) && (portfolio.cashBalance === 0 || !portfolio.cashBalance) && (!portfolio.orders || portfolio.orders.length === 0)) {
+        setShowInitialFundsModal(true);
+      }
+    }
+  }, [isScreenLocked, currentUser, portfolio]);
+
+  // 2-Minute Background Inactivity Guard
   useEffect(() => {
     if (!currentUser) return;
 
     let bgTimer = null;
-    const BACKGROUND_LOCK_DELAY_MS = 25000; // 25 seconds
+    const BACKGROUND_LOCK_DELAY_MS = 120000; // 2 minutes (120 seconds)
 
     const handleEnterBackground = () => {
       // Record when the app was sent to the background (tab hidden or window blurred/minimized)
@@ -249,14 +260,14 @@ export default function App() {
 
       if (bgTimer) clearTimeout(bgTimer);
       bgTimer = setTimeout(() => {
-        // App kept in background for 25 seconds -> trigger PIN screen lock
+        // App kept in background for 2 minutes -> trigger PIN screen lock
         sessionStorage.setItem('ax_screen_locked', 'true');
         setIsScreenLocked(true);
       }, BACKGROUND_LOCK_DELAY_MS);
     };
 
     const handleReturnForeground = () => {
-      // Check if 25 seconds elapsed while in background
+      // Check if 2 minutes elapsed while in background
       const bgTimeStr = sessionStorage.getItem('ax_bg_timestamp');
       if (bgTimeStr) {
         const elapsed = Date.now() - parseInt(bgTimeStr, 10);
@@ -583,6 +594,11 @@ export default function App() {
     setPortfolio(freshState);
 
     try {
+      const userKey = currentUser?.email || currentUser?.id || 'default';
+      localStorage.setItem('ax_funds_configured_' + userKey, 'true');
+    } catch {}
+
+    try {
       const res = await fetch('/api/portfolio/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -602,6 +618,11 @@ export default function App() {
 
   // Start Fresh Account: Purges all older data and opens the initial amount page
   const handleStartFreshAccount = useCallback(async () => {
+    try {
+      const userKey = currentUser?.email || currentUser?.id || 'default';
+      localStorage.removeItem('ax_funds_configured_' + userKey);
+    } catch {}
+
     try {
       await fetch('/api/portfolio/reset', {
         method: 'POST',

@@ -12,7 +12,7 @@ const PORTFOLIO_FILE = process.env.VERCEL
   ? path.join('/tmp', 'portfolio.json')
   : path.join(DATA_DIR, 'portfolio.json');
 
-const INITIAL_CAPITAL = 1000000; // Starts with ₹10,00,000 demo capital
+const INITIAL_CAPITAL = 0; // Starts fresh at ₹0
 
 let state = {
   initialCapital: INITIAL_CAPITAL,
