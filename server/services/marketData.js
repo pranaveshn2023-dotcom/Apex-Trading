@@ -80,12 +80,33 @@ export const PROPER_NAMES = {
   'NIFTYBEES.NS': { name: 'Nippon India Nifty 50 BeES ETF', shortName: 'NIFTYBEES', sector: 'Index ETF', type: 'ETF', exchange: 'NSE', currency: 'INR' },
   'BANKBEES.NS': { name: 'Nippon India Bank BeES ETF', shortName: 'BANKBEES', sector: 'Index ETF', type: 'ETF', exchange: 'NSE', currency: 'INR' },
   'GOLDBEES.NS': { name: 'Nippon India Gold BeES ETF', shortName: 'GOLDBEES', sector: 'Commodity ETF', type: 'ETF', exchange: 'NSE', currency: 'INR' },
+  // Global Equities
+  'AAPL': { name: 'Apple Inc.', shortName: 'Apple', sector: 'Consumer Electronics & Tech', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
+  'TSLA': { name: 'Tesla, Inc.', shortName: 'Tesla', sector: 'Electric Vehicles & Clean Energy', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
+  'MSFT': { name: 'Microsoft Corporation', shortName: 'Microsoft', sector: 'Software & Cloud', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
+  'NVDA': { name: 'NVIDIA Corporation', shortName: 'Nvidia', sector: 'Semiconductors & AI', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
+  'AMZN': { name: 'Amazon.com, Inc.', shortName: 'Amazon', sector: 'E-Commerce & Cloud', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
+  'GOOGL': { name: 'Alphabet Inc. (Google)', shortName: 'Google', sector: 'Internet & Search', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
+  'META': { name: 'Meta Platforms, Inc.', shortName: 'Meta', sector: 'Social Media & Tech', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
 };
 
 /**
  * Common User-Friendly Aliases to Canonical Market Tickers
  */
 export const SYMBOL_ALIASES = {
+  'APPLE': 'AAPL',
+  'AAPL': 'AAPL',
+  'TESLA': 'TSLA',
+  'TSLA': 'TSLA',
+  'MICROSOFT': 'MSFT',
+  'MSFT': 'MSFT',
+  'GOOGLE': 'GOOGL',
+  'GOOGL': 'GOOGL',
+  'AMAZON': 'AMZN',
+  'AMZN': 'AMZN',
+  'NVIDIA': 'NVDA',
+  'NVDA': 'NVDA',
+  'META': 'META',
   'NIFTY': '^NSEI',
   'NIFTY50': '^NSEI',
   'NIFTY 50': '^NSEI',

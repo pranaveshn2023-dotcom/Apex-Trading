@@ -1,17 +1,70 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, TrendingUp, Sparkles, ArrowRight, Check } from 'lucide-react';
+import { Search, X, Sparkles, ArrowRight } from 'lucide-react';
+
+const DEFAULT_INSTRUMENTS = [
+  { symbol: '^NSEI', name: 'NIFTY 50', shortName: 'Nifty 50', sector: 'Indian Benchmark Index', type: 'INDEX', exchange: 'NSE', currency: 'INR' },
+  { symbol: '^NSEBANK', name: 'NIFTY BANK', shortName: 'Bank Nifty', sector: 'Banking & Financials Index', type: 'INDEX', exchange: 'NSE', currency: 'INR' },
+  { symbol: '^BSESN', name: 'S&P BSE SENSEX', shortName: 'Sensex', sector: 'BSE Benchmark Index', type: 'INDEX', exchange: 'BSE', currency: 'INR' },
+  { symbol: 'RELIANCE.NS', name: 'Reliance Industries Ltd', shortName: 'Reliance', sector: 'Energy & Retail', type: 'EQUITY', exchange: 'NSE', currency: 'INR' },
+  { symbol: 'TMPV.NS', name: 'Tata Motors Passenger Vehicles Ltd', shortName: 'Tata Motors (TMPV)', sector: 'Automobile', type: 'EQUITY', exchange: 'NSE', currency: 'INR' },
+  { symbol: 'HDFCBANK.NS', name: 'HDFC Bank Ltd', shortName: 'HDFC Bank', sector: 'Private Banking', type: 'EQUITY', exchange: 'NSE', currency: 'INR' },
+  { symbol: 'NIFTYBEES.NS', name: 'Nippon India Nifty 50 BeES ETF', shortName: 'NIFTYBEES', sector: 'Index ETF', type: 'ETF', exchange: 'NSE', currency: 'INR' },
+  { symbol: 'AAPL', name: 'Apple Inc.', shortName: 'Apple', sector: 'Consumer Electronics & Tech', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
+  { symbol: 'TSLA', name: 'Tesla, Inc.', shortName: 'Tesla', sector: 'Electric Vehicles & Clean Energy', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
+  { symbol: 'MSFT', name: 'Microsoft Corporation', shortName: 'Microsoft', sector: 'Software & Cloud', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
+  { symbol: 'NVDA', name: 'NVIDIA Corporation', shortName: 'Nvidia', sector: 'Semiconductors & AI', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
+  { symbol: '^GSPC', name: 'S&P 500', shortName: 'S&P 500', sector: 'US Benchmark Index', type: 'INDEX', exchange: 'SNP', currency: 'USD' },
+  { symbol: '^IXIC', name: 'NASDAQ COMPOSITE', shortName: 'Nasdaq', sector: 'US Tech Index', type: 'INDEX', exchange: 'NASDAQ', currency: 'USD' }
+];
+
+const POPULAR_PICKS = [
+  { label: 'NIFTY 50', symbol: '^NSEI' },
+  { label: 'BANK NIFTY', symbol: '^NSEBANK' },
+  { label: 'SENSEX', symbol: '^BSESN' },
+  { label: 'RELIANCE', symbol: 'RELIANCE.NS' },
+  { label: 'TATA MOTORS', symbol: 'TMPV.NS' },
+  { label: 'HDFCBANK', symbol: 'HDFCBANK.NS' },
+  { label: 'APPLE', symbol: 'AAPL' },
+  { label: 'TESLA', symbol: 'TSLA' },
+  { label: 'NIFTY BEES', symbol: 'NIFTYBEES.NS' },
+  { label: 'S&P 500', symbol: '^GSPC' },
+  { label: 'NASDAQ', symbol: '^IXIC' }
+];
+
+const CATEGORIES = [
+  { id: 'ALL', label: 'All Instruments' },
+  { id: 'NSE', label: 'NSE Equities' },
+  { id: 'INDEX', label: 'Indices & Benchmarks' },
+  { id: 'ETF', label: 'Index ETFs' },
+  { id: 'GLOBAL', label: 'Global (US)' }
+];
+
+function filterLocalMatches(q) {
+  if (!q) return DEFAULT_INSTRUMENTS;
+  const lower = q.toLowerCase();
+  return DEFAULT_INSTRUMENTS.filter(inst => 
+    inst.symbol.toLowerCase().includes(lower) ||
+    inst.name.toLowerCase().includes(lower) ||
+    inst.shortName.toLowerCase().includes(lower) ||
+    (inst.sector && inst.sector.toLowerCase().includes(lower))
+  );
+}
 
 export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState(DEFAULT_INSTRUMENTS);
   const [loading, setLoading] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const inputRef = useRef(null);
+  const searchSeqRef = useRef(0);
+  const debounceTimerRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
-      handleSearch('NIFTY');
+      setQuery('');
+      setCategoryFilter('ALL');
+      setResults(DEFAULT_INSTRUMENTS);
       const handleKeyDown = (e) => {
         if (e.key === 'Escape') {
           onClose();
@@ -22,66 +75,68 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
     } else {
       setQuery('');
       setResults([]);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     }
   }, [isOpen, onClose]);
 
-  const handleSearch = async (q) => {
-    if (!q || q.trim().length === 0) {
-      setResults([]);
-      return;
-    }
+  const performServerSearch = async (trimmed) => {
+    const currentSeq = ++searchSeqRef.current;
     setLoading(true);
     try {
-      const response = await fetch(`/api/market/search?q=${encodeURIComponent(q.trim())}`);
+      const response = await fetch(`/api/market/search?q=${encodeURIComponent(trimmed)}`);
       const res = await response.json();
-      if (res && res.success && res.data) {
+      if (currentSeq !== searchSeqRef.current) return;
+
+      if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
         setResults(res.data);
+      } else {
+        const local = filterLocalMatches(trimmed);
+        if (local.length > 0) setResults(local);
       }
     } catch (err) {
-      console.error(err);
+      if (currentSeq === searchSeqRef.current) {
+        const local = filterLocalMatches(trimmed);
+        if (local.length > 0) setResults(local);
+      }
     } finally {
-      setLoading(false);
+      if (currentSeq === searchSeqRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   const handleInputChange = (val) => {
     setQuery(val);
-    if (val.trim().length >= 1) {
-      handleSearch(val);
-    } else {
-      handleSearch('NIFTY');
+    const trimmed = val.trim();
+
+    if (!trimmed) {
+      setResults(DEFAULT_INSTRUMENTS);
+      setLoading(false);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      return;
     }
+
+    // Instant local matches so user sees immediate results on keypress
+    const immediate = filterLocalMatches(trimmed);
+    if (immediate.length > 0) {
+      setResults(immediate);
+    }
+
+    // Debounced fetch for live online / full catalog search
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      performServerSearch(trimmed);
+    }, 180);
   };
 
   if (!isOpen) return null;
-
-  const popularPicks = [
-    { label: 'NIFTY 50', symbol: '^NSEI' },
-    { label: 'BANK NIFTY', symbol: '^NSEBANK' },
-    { label: 'SENSEX', symbol: '^BSESN' },
-    { label: 'RELIANCE', symbol: 'RELIANCE.NS' },
-    { label: 'TATA MOTORS', symbol: 'TATAMOTORS.NS' },
-    { label: 'HDFCBANK', symbol: 'HDFCBANK.NS' },
-    { label: 'NIFTY BEES (ETF)', symbol: 'NIFTYBEES.NS' },
-    { label: 'S&P 500', symbol: '^GSPC' },
-    { label: 'NASDAQ', symbol: '^IXIC' },
-    { label: 'APPLE', symbol: 'AAPL' }
-  ];
-
-  const categories = [
-    { id: 'ALL', label: 'All Instruments' },
-    { id: 'NSE', label: 'NSE Equities' },
-    { id: 'INDEX', label: 'Indices & Benchmarks' },
-    { id: 'ETF', label: 'Index ETFs' },
-    { id: 'GLOBAL', label: 'Global (US)' }
-  ];
 
   const filteredResults = results.filter(stock => {
     if (categoryFilter === 'ALL') return true;
     if (categoryFilter === 'INDEX') return stock.type === 'INDEX' || stock.sector === 'Index' || stock.symbol.startsWith('^');
     if (categoryFilter === 'ETF') return stock.type === 'ETF' || stock.symbol.endsWith('BEES.NS');
     if (categoryFilter === 'NSE') return stock.exchange === 'NSE' && stock.type !== 'INDEX';
-    if (categoryFilter === 'GLOBAL') return stock.exchange === 'NASDAQ' || stock.exchange === 'NYSE' || stock.symbol.startsWith('^G') || stock.symbol.startsWith('^IX');
+    if (categoryFilter === 'GLOBAL') return stock.exchange === 'NASDAQ' || stock.exchange === 'NYSE' || stock.symbol.startsWith('^G') || stock.symbol.startsWith('^IX') || stock.currency === 'USD';
     return true;
   });
 
@@ -92,11 +147,21 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
     <div className="modal-overlay" onClick={onClose}>
       <div 
         className="glass-panel-elevated"
-        style={{ width: '700px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', background: '#ffffff', overflow: 'hidden', border: '1px solid #e2e8f0', borderRadius: '16px', boxShadow: '0 20px 40px -15px rgba(0,0,0,0.15)' }}
+        style={{ 
+          width: '700px', 
+          maxHeight: '85vh', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          background: '#ffffff', 
+          overflow: 'hidden', 
+          border: '1px solid #e2e8f0', 
+          borderRadius: '16px', 
+          boxShadow: '0 20px 40px -15px rgba(0,0,0,0.15)' 
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px', background: '#ffffff' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px', background: '#ffffff', flexShrink: 0 }}>
           <Search size={22} color="#059669" />
           <input
             ref={inputRef}
@@ -136,12 +201,23 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
           </button>
         </div>
 
-        {/* Popular Quick-Select Chips */}
-        <div style={{ padding: '10px 16px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: '6px', overflowX: 'auto', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', whiteSpace: 'nowrap', marginRight: '4px' }}>
+        {/* Popular Quick-Select Chips (Zero Overlap, No Scrollbar) */}
+        <div style={{ 
+          padding: '8px 16px', 
+          background: '#f8fafc', 
+          borderBottom: '1px solid #e2e8f0', 
+          display: 'flex', 
+          gap: '6px', 
+          overflowX: 'auto', 
+          alignItems: 'center', 
+          flexShrink: 0,
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}>
+          <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', whiteSpace: 'nowrap', marginRight: '4px', flexShrink: 0 }}>
             Trending:
           </span>
-          {popularPicks.map(p => (
+          {POPULAR_PICKS.map(p => (
             <button
               key={p.symbol}
               onClick={() => {
@@ -153,14 +229,15 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
                 color: '#334155',
                 border: '1px solid #cbd5e1',
                 borderRadius: '6px',
-                padding: '4px 10px',
-                fontSize: '0.75rem',
+                padding: '4px 9px',
+                fontSize: '0.74rem',
                 fontWeight: 600,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '4px',
+                flexShrink: 0,
                 transition: 'all 0.15s ease'
               }}
               onMouseEnter={(e) => {
@@ -179,9 +256,19 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
           ))}
         </div>
 
-        {/* Category Filters */}
-        <div style={{ padding: '8px 16px', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: '6px', overflowX: 'auto', background: '#ffffff' }}>
-          {categories.map(c => (
+        {/* Category Filters (Separate Row, Zero Collision) */}
+        <div style={{ 
+          padding: '8px 16px', 
+          borderBottom: '1px solid #e2e8f0', 
+          display: 'flex', 
+          gap: '6px', 
+          overflowX: 'auto', 
+          background: '#ffffff', 
+          flexShrink: 0,
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}>
+          {CATEGORIES.map(c => (
             <button
               key={c.id}
               onClick={() => setCategoryFilter(c.id)}
@@ -194,7 +281,8 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                flexShrink: 0
               }}
             >
               {c.label}
@@ -210,7 +298,7 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
               onClose();
             }}
             style={{
-              padding: '12px 20px',
+              padding: '11px 20px',
               background: '#ecfdf5',
               borderBottom: '1px solid #a7f3d0',
               display: 'flex',
@@ -218,15 +306,16 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
               justifyContent: 'space-between',
               cursor: 'pointer',
               color: '#047857',
-              fontSize: '0.88rem',
-              fontWeight: 600
+              fontSize: '0.86rem',
+              fontWeight: 600,
+              flexShrink: 0
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Sparkles size={18} color="#059669" />
+              <Sparkles size={17} color="#059669" />
               <span>Load Real Live Quote & Chart for <b>{directSymbol}</b> from Exchange</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', background: '#059669', color: '#fff', padding: '3px 8px', borderRadius: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', background: '#059669', color: '#fff', padding: '3px 8px', borderRadius: '4px' }}>
               <span>Press Enter</span>
               <ArrowRight size={14} />
             </div>
@@ -234,7 +323,7 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
         )}
 
         {/* Results List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '10px', background: '#ffffff' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '10px', background: '#ffffff' }}>
           {loading && results.length === 0 ? (
             <div style={{ padding: '50px 20px', textAlign: 'center', color: '#059669', fontSize: '0.9rem' }}>
               <div className="pulse-live" style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#059669', margin: '0 auto 12px auto' }} />
@@ -242,7 +331,7 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
             </div>
           ) : filteredResults.length === 0 ? (
             <div style={{ padding: '50px 20px', textAlign: 'center', color: '#64748b', fontSize: '0.9rem' }}>
-              No pre-indexed matches for "{query}". You can press Enter or click the banner above to load <b>{directSymbol}</b> directly.
+              No matches found for "{query}". You can press Enter or click the banner above to load <b>{directSymbol}</b> directly.
             </div>
           ) : (
             filteredResults.map(stock => {
@@ -283,7 +372,8 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
                       alignItems: 'center', 
                       justifyContent: 'center',
                       fontSize: '0.75rem',
-                      fontWeight: 700
+                      fontWeight: 700,
+                      flexShrink: 0
                     }}>
                       {isIndex ? 'IDX' : (isETF ? 'ETF' : (stock.shortName?.[0] || '₹'))}
                     </div>
@@ -315,7 +405,7 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
                     </div>
                   </div>
 
-                  <div style={{ textAlign: 'right' }}>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div className="font-mono" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>
                       {stock.symbol}
                     </div>
