@@ -323,10 +323,12 @@ export async function getQuote(rawSymbol) {
  */
 export async function getQuotesBatch(symbols = []) {
   const promises = symbols.map(s => 
-    getQuote(s).catch(err => {
-      console.warn(`Quote failed for ${s}:`, err.message);
-      return null;
-    })
+    getQuote(s)
+      .then(q => (q ? { ...q, requestedSymbol: s } : null))
+      .catch(err => {
+        console.warn(`Quote failed for ${s}:`, err.message);
+        return null;
+      })
   );
   const results = await Promise.all(promises);
   return results.filter(Boolean);

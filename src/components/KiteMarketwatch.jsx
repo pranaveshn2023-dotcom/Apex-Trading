@@ -31,7 +31,10 @@ export default function KiteMarketwatch({
       if (res.success && res.data) {
         const map = {};
         res.data.forEach(q => {
-          if (q && q.symbol) map[q.symbol] = q;
+          if (q) {
+            if (q.symbol) map[q.symbol] = q;
+            if (q.requestedSymbol) map[q.requestedSymbol] = q;
+          }
         });
         setQuotesMap(prev => ({ ...prev, ...map }));
       }

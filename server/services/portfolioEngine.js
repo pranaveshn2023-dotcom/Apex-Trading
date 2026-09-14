@@ -28,7 +28,7 @@ let state = {
   orders: [], // History of all orders { id, symbol, name, type: 'BUY'|'SELL', orderType: 'MARKET'|'LIMIT'|'SL', product, qty, price, executedPrice, status: 'EXECUTED'|'PENDING'|'CANCELLED'|'REJECTED', charges, timestamp, thesis }
   journal: [], // In-depth trade journal entries { id, orderId, symbol, entryDate, exitDate, tradeType, entryPrice, exitPrice, qty, pnl, pnlPct, thesis, strategy, rating, lessons, tags }
   watchlists: [
-    { id: 'default', name: 'Watchlist 1', symbols: ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS', 'ICICIBANK.NS', 'TATAMOTORS.NS'] },
+    { id: 'default', name: 'Watchlist 1', symbols: [] },
     { id: 'wl-2', name: 'Watchlist 2', symbols: [] },
     { id: 'wl-3', name: 'Watchlist 3', symbols: [] },
     { id: 'wl-4', name: 'Watchlist 4', symbols: [] },
@@ -73,6 +73,13 @@ export async function initPortfolio() {
     } catch (err) {
       console.error('Cloudflare D1 initialization error:', err.message);
     }
+  }
+
+  // Purge any legacy hardcoded demo symbols so watchlists start empty and dynamic
+  const OLD_DEMO_SYMBOLS = ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS', 'ICICIBANK.NS', 'TATAMOTORS.NS'];
+  if (state.watchlists?.[0]?.symbols?.length === 6 && state.watchlists[0].symbols.every(s => OLD_DEMO_SYMBOLS.includes(s))) {
+    state.watchlists[0].symbols = [];
+    savePortfolio();
   }
 }
 
@@ -729,6 +736,13 @@ export async function resetPortfolio(customCapital = 0) {
   state.positions = [];
   state.orders = [];
   state.journal = [];
+  state.watchlists = [
+    { id: 'default', name: 'Watchlist 1', symbols: [] },
+    { id: 'wl-2', name: 'Watchlist 2', symbols: [] },
+    { id: 'wl-3', name: 'Watchlist 3', symbols: [] },
+    { id: 'wl-4', name: 'Watchlist 4', symbols: [] },
+    { id: 'wl-5', name: 'Watchlist 5', symbols: [] }
+  ];
   savePortfolio();
   return await getPortfolioSummary();
 }
