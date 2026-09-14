@@ -8,7 +8,16 @@ import {
   LineSeries, 
   HistogramSeries 
 } from 'lightweight-charts';
-import { Activity, BarChart2, Eye, EyeOff, Maximize2 } from 'lucide-react';
+import { 
+  Activity, 
+  BarChart2, 
+  Eye, 
+  EyeOff, 
+  Maximize2,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw
+} from 'lucide-react';
 import { formatINR } from '../utils/formatters';
 
 // Helper to calculate Exponential Moving Average
@@ -50,6 +59,8 @@ export default function TradingChart({
   const volumeSeriesRef = useRef(null);
   const ema20SeriesRef = useRef(null);
   const ema50SeriesRef = useRef(null);
+  const prevSymbolRef = useRef(null);
+  const prevTfRef = useRef(null);
 
   const [chartType, setChartType] = useState('candles'); // 'candles' | 'line'
   const [showEma20, setShowEma20] = useState(true);
@@ -105,6 +116,7 @@ export default function TradingChart({
       },
       rightPriceScale: {
         borderColor: '#e2e8f0',
+        autoScale: true,
         scaleMargins: {
           top: 0.1,
           bottom: 0.25,
@@ -114,9 +126,25 @@ export default function TradingChart({
         borderColor: '#e2e8f0',
         timeVisible: true,
         secondsVisible: false,
+        minBarSpacing: 0.05,
+        barSpacing: 8,
+        rightOffset: 10,
+        shiftVisibleRangeOnNewBar: true,
       },
-      handleScroll: true,
-      handleScale: true,
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      handleScale: {
+        axisPressedMouseMove: {
+          time: true,
+          price: true,
+        },
+        mouseWheel: true,
+        pinch: true,
+      },
     });
 
     chartInstanceRef.current = chart;
@@ -234,11 +262,53 @@ export default function TradingChart({
     };
   }, [chartType]);
 
+  // Zoom Controls Handlers
+  const handleZoomIn = () => {
+    if (!chartInstanceRef.current) return;
+    const ts = chartInstanceRef.current.timeScale();
+    const range = ts.getVisibleLogicalRange();
+    if (range) {
+      const span = range.to - range.from;
+      const step = Math.max(1, Math.round(span * 0.25));
+      ts.setVisibleLogicalRange({
+        from: range.from + step,
+        to: range.to - step,
+      });
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (!chartInstanceRef.current) return;
+    const ts = chartInstanceRef.current.timeScale();
+    const range = ts.getVisibleLogicalRange();
+    if (range) {
+      const span = range.to - range.from;
+      const step = Math.max(1, Math.round(span * 0.25));
+      ts.setVisibleLogicalRange({
+        from: range.from - step,
+        to: range.to + step,
+      });
+    }
+  };
+
+  const handleResetZoom = () => {
+    if (!chartInstanceRef.current) return;
+    chartInstanceRef.current.timeScale().fitContent();
+  };
+
   // Update chart data whenever candles change
   useEffect(() => {
-    if (!candles || candles.length === 0 || !seriesRef.current) return;
+    if (!candles || candles.length === 0 || !seriesRef.current || !chartInstanceRef.current) return;
 
     try {
+      const currentTfKey = timeframe?.label || timeframe || 'default';
+      const isNewContext = prevSymbolRef.current !== symbol || prevTfRef.current !== currentTfKey;
+
+      // Capture user's current zoom & scroll range so polling updates never wipe it out
+      const currentLogicalRange = !isNewContext 
+        ? chartInstanceRef.current.timeScale().getVisibleLogicalRange() 
+        : null;
+
       if (chartType === 'candles') {
         const formattedCandles = candles.map(c => ({
           time: typeof c.time === 'number' ? c.time : Math.floor(new Date(c.time).getTime() / 1000),
@@ -287,13 +357,19 @@ export default function TradingChart({
         }
       }
 
-      if (chartInstanceRef.current) {
+      // ONLY auto-fit when the user explicitly switches symbol or timeframe
+      if (isNewContext) {
         chartInstanceRef.current.timeScale().fitContent();
+        prevSymbolRef.current = symbol;
+        prevTfRef.current = currentTfKey;
+      } else if (currentLogicalRange) {
+        // Retain the user's custom zoom in/out & pan position during live updates
+        chartInstanceRef.current.timeScale().setVisibleLogicalRange(currentLogicalRange);
       }
     } catch (err) {
       console.warn('Error applying chart series data:', err);
     }
-  }, [candles, chartType, showEma20, showEma50, showVolume]);
+  }, [candles, chartType, showEma20, showEma50, showVolume, symbol, timeframe]);
 
   return (
     <div className="glass-panel" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', minHeight: '440px', height: '540px', position: 'relative', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
@@ -425,6 +501,71 @@ export default function TradingChart({
           >
             Vol
           </button>
+
+          {/* Zoom Controls: Zoom In, Zoom Out, Reset Fit */}
+          <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', padding: '2px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '2px' }}>
+            <button
+              onClick={handleZoomIn}
+              title="Zoom In (or use mouse scroll wheel up)"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: '4px 6px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                color: '#475569',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.color = '#059669'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#475569'; }}
+            >
+              <ZoomIn size={14} />
+            </button>
+            <button
+              onClick={handleZoomOut}
+              title="Zoom Out (or use mouse scroll wheel down)"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: '4px 6px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                color: '#475569',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.color = '#059669'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#475569'; }}
+            >
+              <ZoomOut size={14} />
+            </button>
+            <button
+              onClick={handleResetZoom}
+              title="Reset Zoom / Fit all candles"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: '4px 6px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                color: '#475569',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                gap: '3px',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.color = '#059669'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#475569'; }}
+            >
+              <RotateCcw size={12} />
+              <span>Fit</span>
+            </button>
+          </div>
         </div>
       </div>
 
