@@ -358,6 +358,10 @@ export default function App() {
     });
   }, []);
 
+  // High-Speed In-Memory Client Caches (Stale-While-Revalidate for 0ms transitions)
+  const clientQuoteCache = useRef(new Map());
+  const clientCandlesCache = useRef(new Map());
+
   // Fetch Live Indices
   const fetchIndices = useCallback(() => {
     safeFetchJson('/api/market/indices')
@@ -367,12 +371,24 @@ export default function App() {
       .catch(console.error);
   }, []);
 
-  // Fetch Current Stock Quote
+  // Fetch Current Stock Quote with 0ms Instant Cache Display
   const fetchQuote = useCallback((symbol) => {
     if (!symbol) return;
+    const cleanSym = symbol.trim().toUpperCase();
+    const cached = clientQuoteCache.current.get(cleanSym);
+    if (cached) {
+      setCurrentQuote(cached.data);
+      if (cached.data.symbol && cached.data.symbol !== symbol) {
+        setActiveSymbol(cached.data.symbol);
+      }
+      if (Date.now() - cached.time < 3500) return;
+    }
+
     safeFetchJson(`/api/market/quote/${encodeURIComponent(symbol)}`)
       .then(res => {
         if (res && res.success && res.data) {
+          clientQuoteCache.current.set(cleanSym, { time: Date.now(), data: res.data });
+          if (res.data.symbol) clientQuoteCache.current.set(res.data.symbol.toUpperCase(), { time: Date.now(), data: res.data });
           setCurrentQuote(res.data);
           if (res.data.symbol && res.data.symbol !== symbol) {
             setActiveSymbol(res.data.symbol);
@@ -382,13 +398,27 @@ export default function App() {
       .catch(console.error);
   }, []);
 
-  // Fetch Candlestick History
+  // Fetch Candlestick History with Instant Cache + Silent Background Refresh
   const fetchCandles = useCallback((symbol, tf, silent = false) => {
     if (!symbol) return;
-    if (!silent) setLoadingChart(true);
+    const cacheKey = `${symbol.trim().toUpperCase()}_${tf.range}_${tf.interval}`;
+    const cached = clientCandlesCache.current.get(cacheKey);
+
+    if (cached) {
+      setCandles(cached.data);
+      if (Date.now() - cached.time < 12000 && !silent) {
+        return;
+      }
+    } else if (!silent) {
+      setLoadingChart(true);
+    }
+
     safeFetchJson(`/api/market/history/${encodeURIComponent(symbol)}?range=${tf.range}&interval=${tf.interval}`)
       .then(res => {
-        if (res && res.success && res.data) setCandles(res.data);
+        if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+          clientCandlesCache.current.set(cacheKey, { time: Date.now(), data: res.data });
+          setCandles(res.data);
+        }
       })
       .catch(console.error)
       .finally(() => { if (!silent) setLoadingChart(false); });

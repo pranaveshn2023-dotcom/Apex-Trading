@@ -1,21 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Sparkles, ArrowRight } from 'lucide-react';
-
-const DEFAULT_INSTRUMENTS = [
-  { symbol: '^NSEI', name: 'NIFTY 50', shortName: 'Nifty 50', sector: 'Indian Benchmark Index', type: 'INDEX', exchange: 'NSE', currency: 'INR' },
-  { symbol: '^NSEBANK', name: 'NIFTY BANK', shortName: 'Bank Nifty', sector: 'Banking & Financials Index', type: 'INDEX', exchange: 'NSE', currency: 'INR' },
-  { symbol: '^BSESN', name: 'S&P BSE SENSEX', shortName: 'Sensex', sector: 'BSE Benchmark Index', type: 'INDEX', exchange: 'BSE', currency: 'INR' },
-  { symbol: 'RELIANCE.NS', name: 'Reliance Industries Ltd', shortName: 'Reliance', sector: 'Energy & Retail', type: 'EQUITY', exchange: 'NSE', currency: 'INR' },
-  { symbol: 'TMPV.NS', name: 'Tata Motors Passenger Vehicles Ltd', shortName: 'Tata Motors (TMPV)', sector: 'Automobile', type: 'EQUITY', exchange: 'NSE', currency: 'INR' },
-  { symbol: 'HDFCBANK.NS', name: 'HDFC Bank Ltd', shortName: 'HDFC Bank', sector: 'Private Banking', type: 'EQUITY', exchange: 'NSE', currency: 'INR' },
-  { symbol: 'NIFTYBEES.NS', name: 'Nippon India Nifty 50 BeES ETF', shortName: 'NIFTYBEES', sector: 'Index ETF', type: 'ETF', exchange: 'NSE', currency: 'INR' },
-  { symbol: 'AAPL', name: 'Apple Inc.', shortName: 'Apple', sector: 'Consumer Electronics & Tech', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
-  { symbol: 'TSLA', name: 'Tesla, Inc.', shortName: 'Tesla', sector: 'Electric Vehicles & Clean Energy', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
-  { symbol: 'MSFT', name: 'Microsoft Corporation', shortName: 'Microsoft', sector: 'Software & Cloud', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
-  { symbol: 'NVDA', name: 'NVIDIA Corporation', shortName: 'Nvidia', sector: 'Semiconductors & AI', type: 'EQUITY', exchange: 'NASDAQ', currency: 'USD' },
-  { symbol: '^GSPC', name: 'S&P 500', shortName: 'S&P 500', sector: 'US Benchmark Index', type: 'INDEX', exchange: 'SNP', currency: 'USD' },
-  { symbol: '^IXIC', name: 'NASDAQ COMPOSITE', shortName: 'Nasdaq', sector: 'US Tech Index', type: 'INDEX', exchange: 'NASDAQ', currency: 'USD' }
-];
+import { MASTER_INSTRUMENTS } from '../data/masterInstruments';
 
 const POPULAR_PICKS = [
   { label: 'NIFTY 50', symbol: '^NSEI' },
@@ -26,6 +11,7 @@ const POPULAR_PICKS = [
   { label: 'HDFCBANK', symbol: 'HDFCBANK.NS' },
   { label: 'APPLE', symbol: 'AAPL' },
   { label: 'TESLA', symbol: 'TSLA' },
+  { label: 'NVIDIA', symbol: 'NVDA' },
   { label: 'NIFTY BEES', symbol: 'NIFTYBEES.NS' },
   { label: 'S&P 500', symbol: '^GSPC' },
   { label: 'NASDAQ', symbol: '^IXIC' }
@@ -40,19 +26,33 @@ const CATEGORIES = [
 ];
 
 function filterLocalMatches(q) {
-  if (!q) return DEFAULT_INSTRUMENTS;
+  if (!q) return MASTER_INSTRUMENTS.slice(0, 25);
   const lower = q.toLowerCase();
-  return DEFAULT_INSTRUMENTS.filter(inst => 
-    inst.symbol.toLowerCase().includes(lower) ||
-    inst.name.toLowerCase().includes(lower) ||
-    inst.shortName.toLowerCase().includes(lower) ||
-    (inst.sector && inst.sector.toLowerCase().includes(lower))
-  );
+  const exact = [];
+  const starts = [];
+  const contains = [];
+
+  for (const inst of MASTER_INSTRUMENTS) {
+    const sym = inst.symbol.toLowerCase();
+    const bareSym = sym.replace('.ns', '').replace('.bo', '');
+    const shortName = (inst.shortName || '').toLowerCase();
+    const name = (inst.name || '').toLowerCase();
+    const sector = (inst.sector || '').toLowerCase();
+
+    if (sym === lower || bareSym === lower || shortName === lower) {
+      exact.push(inst);
+    } else if (sym.startsWith(lower) || bareSym.startsWith(lower) || shortName.startsWith(lower)) {
+      starts.push(inst);
+    } else if (sym.includes(lower) || shortName.includes(lower) || name.includes(lower) || sector.includes(lower)) {
+      contains.push(inst);
+    }
+  }
+  return [...exact, ...starts, ...contains].slice(0, 35);
 }
 
 export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState(DEFAULT_INSTRUMENTS);
+  const [results, setResults] = useState(() => MASTER_INSTRUMENTS.slice(0, 25));
   const [loading, setLoading] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const inputRef = useRef(null);
@@ -64,7 +64,7 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
       setTimeout(() => inputRef.current?.focus(), 50);
       setQuery('');
       setCategoryFilter('ALL');
-      setResults(DEFAULT_INSTRUMENTS);
+      setResults(MASTER_INSTRUMENTS.slice(0, 25));
       const handleKeyDown = (e) => {
         if (e.key === 'Escape') {
           onClose();
@@ -110,7 +110,7 @@ export default function StockSearchModal({ isOpen, onClose, onSelectStock }) {
     const trimmed = val.trim();
 
     if (!trimmed) {
-      setResults(DEFAULT_INSTRUMENTS);
+      setResults(MASTER_INSTRUMENTS.slice(0, 25));
       setLoading(false);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       return;
